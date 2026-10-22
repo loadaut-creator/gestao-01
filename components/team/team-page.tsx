@@ -66,7 +66,7 @@ export function TeamPage() {
     setRoster((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, ...changes } : row));
   }
 
-  function saveRoster() {
+  async function saveRoster() {
     const selected = roster.filter((row) => row.include);
     if (!selected.length) { setNotice({ kind: "error", text: "Selecione ao menos um funcionário." }); return; }
     if (rosterErrors.length) { setNotice({ kind: "error", text: "Corrija as linhas não reconhecidas antes de salvar." }); return; }
@@ -82,19 +82,19 @@ export function TeamPage() {
       if (existing) next.splice(next.indexOf(existing), 1, { ...existing, ...cleanEmployeeInput(input), updatedAt: now });
       else next.push({ ...cleanEmployeeInput(input), id: crypto.randomUUID(), createdAt: now, updatedAt: now });
     }
-    if (persist(next, `${selected.length} ${selected.length === 1 ? "funcionário salvo" : "funcionários salvos"} na Equipe.`)) {
+    if (await persist(next, `${selected.length} ${selected.length === 1 ? "funcionário salvo" : "funcionários salvos"} na Equipe.`)) {
       setRoster([]); setRosterErrors([]); setBiText("");
     }
   }
 
-  function persist(next: Employee[], message: string) {
+  async function persist(next: Employee[], message: string) {
     try {
-      saveEmployees(next);
+      await saveEmployees(next);
       setEmployees(next);
       setNotice({ kind: "success", text: message });
       return true;
-    } catch {
-      setNotice({ kind: "error", text: "Não foi possível salvar neste navegador. Verifique se o armazenamento local está disponível." });
+    } catch (error) {
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "Não foi possível salvar." });
       return false;
     }
   }
@@ -112,7 +112,7 @@ export function TeamPage() {
     setErrors((current) => ({ ...current, [field]: undefined }));
   }
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const found = validateEmployee(form, employees, editingId ?? undefined);
     if (Object.keys(found).length) { setErrors(found); setNotice({ kind: "error", text: "Revise os campos indicados no formulário." }); return; }
@@ -121,16 +121,16 @@ export function TeamPage() {
     const next = editingId
       ? employees.map((employee) => employee.id === editingId ? { ...employee, ...clean, updatedAt: now } : employee)
       : [...employees, { ...clean, id: crypto.randomUUID(), createdAt: now, updatedAt: now }];
-    if (persist(next, editingId ? "Funcionário atualizado." : "Funcionário cadastrado.")) {
+    if (await persist(next, editingId ? "Funcionário atualizado." : "Funcionário cadastrado.")) {
       setFormOpen(false);
       setEditingId(null);
     }
   }
 
-  function toggleStatus(employee: Employee) {
+  async function toggleStatus(employee: Employee) {
     const status: EmployeeStatus = employee.status === "ativo" ? "inativo" : "ativo";
     const next = employees.map((item) => item.id === employee.id ? { ...item, status, updatedAt: new Date().toISOString() } : item);
-    persist(next, status === "ativo" ? "Funcionário reativado." : "Funcionário inativado.");
+    await persist(next, status === "ativo" ? "Funcionário reativado." : "Funcionário inativado.");
   }
 
   return <div className="team-page">
@@ -143,7 +143,7 @@ export function TeamPage() {
     {notice && <div className={`team-notice ${notice.kind}`} role="status" aria-live="polite">{notice.kind === "success" && <CheckCircle2 size={18}/>}<span>{notice.text}</span></div>}
 
     <section className="panel team-list-panel" aria-labelledby="team-list-title">
-      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastro e vínculo com o identificador do BI. Nesta etapa, os dados ficam salvos neste navegador.</p></div></div>
+      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastro e vínculo com o identificador do BI. Os dados são salvos no ambiente indicado no topo da tela.</p></div></div>
 
       {formOpen && <form className="team-form" onSubmit={submit} noValidate>
         <div className="team-form-heading"><div><h3>{editingId ? "Editar funcionário" : "Novo funcionário"}</h3><p>Preencha os dados do colaborador.</p></div><button type="button" className="icon-button" onClick={() => setFormOpen(false)} aria-label="Fechar formulário"><X size={19}/></button></div>

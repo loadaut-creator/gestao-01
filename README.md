@@ -46,3 +46,7 @@ Destino solicitado: `muralindiana.online`. Ter o domínio registrado não inclui
 - `AGENTS.md`: desenvolvimento por blocos autorizados.
 
 Credenciais, dependências, arquivos de compilação e capturas locais ficam fora do repositório.
+
+## Banco e autenticação na nuvem
+
+A integração D1 + Pages Functions + Cloudflare Access está implementada com ativação controlada. Siga [o roteiro de ativação](docs/cloudflare-database.md). Sem CLOUD_ENABLED=1, a versão continua local para permitir o backup antes da migração. Valide a API com `npm run test:cloud`.

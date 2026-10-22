@@ -26,11 +26,11 @@ function SectorGoals({ month, sector, goals, entries }: { month: string; sector:
     if (savedSale !== undefined) queueMicrotask(() => { if (active) setDraft((current) => ({ ...current, sale: String(savedSale) })); });
     return () => { active = false; };
   }, [savedSale]);
-  const save = (event: React.FormEvent) => {
+  const save = async (event: React.FormEvent) => {
     event.preventDefault(); setError(""); setMessage("");
     try {
       const next = metrics.filter(({ key }) => draft[key] !== undefined).map(({ key }) => ({ month, sector, metric: key, target: Number(draft[key]) }));
-      saveSectorGoals(month, sector, next);
+      await saveSectorGoals(month, sector, next);
       setEditing(next.length === 0); setMessage("Metas salvas.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível salvar."); }
   };

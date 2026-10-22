@@ -28,9 +28,9 @@ export function MonthlyAllocation({ month, goals, onSaved, onEdit, mode, onModeC
     else setValues(["", "", ""]);
     onModeChange(next); setError(""); onEdit();
   };
-  const save = (event: React.FormEvent) => {
+  const save = async (event: React.FormEvent) => {
     event.preventDefault(); setError("");
-    try { saveMonthlyAllocation(month, Number(total), mode, numeric); onSaved(); }
+    try { await saveMonthlyAllocation(month, Number(total), mode, numeric); onSaved(); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível salvar a distribuição."); }
   };
   const balance = mode === "percent" ? 100 - sum : Number(total) - sum;

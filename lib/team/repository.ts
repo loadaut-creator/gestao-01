@@ -1,9 +1,11 @@
+import { cloud, isCloud, saveCloud } from "../cloud/client";
 import type { Employee } from "./model";
 
 const STORAGE_KEY = "visao-comercial:employees:v1";
 const CHANGE_EVENT = "visao308:employees-changed";
 
 export function loadEmployees(): Employee[] {
+  if (isCloud()) return cloud.data.employees;
   const saved = localStorage.getItem(STORAGE_KEY);
   if (!saved) return [];
   const parsed: unknown = JSON.parse(saved);
@@ -11,8 +13,9 @@ export function loadEmployees(): Employee[] {
   return parsed as Employee[];
 }
 
-export function saveEmployees(employees: Employee[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+export async function saveEmployees(employees: Employee[]) {
+  if (isCloud()) await saveCloud("employees", employees);
+  else localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 

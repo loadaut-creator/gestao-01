@@ -1,3 +1,4 @@
+import { cloud, isCloud, api, saveCloud } from "../cloud/client";
 import type { ImportRecord, MappingTemplate } from "./model";
 
 const DATABASE = "visao-comercial-bi";
@@ -40,7 +41,7 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
-export async function listImports(): Promise<ImportRecord[]> {
+export async function listLocalImports(): Promise<ImportRecord[]> {
   const database = await openDatabase();
   try {
     return await new Promise((resolve, reject) => {
@@ -51,7 +52,17 @@ export async function listImports(): Promise<ImportRecord[]> {
   } finally { database.close(); }
 }
 
+export async function listImports(): Promise<ImportRecord[]> {
+  return isCloud() ? api<ImportRecord[]>("imports") : listLocalImports();
+}
+
 export async function saveImport(record: ImportRecord): Promise<void> {
+  if (isCloud()) {
+    const result = await api<{duplicate:boolean}>("imports", { method: "POST", body: JSON.stringify(record) });
+    notifyImportsChanged();
+    if(result.duplicate) throw new Error("Esta importação já estava salva na nuvem. O histórico foi atualizado sem duplicar os dados.");
+    return;
+  }
   const database = await openDatabase();
   try {
     await new Promise<void>((resolve, reject) => {
@@ -66,6 +77,7 @@ export async function saveImport(record: ImportRecord): Promise<void> {
 }
 
 export async function deleteImport(id: string): Promise<void> {
+  if (isCloud()) { await api(`imports/${encodeURIComponent(id)}`, {method:"DELETE"}); notifyImportsChanged(); return; }
   const database = await openDatabase();
   try {
     await new Promise<void>((resolve, reject) => {
@@ -80,14 +92,16 @@ export async function deleteImport(id: string): Promise<void> {
 }
 
 export function loadTemplates(): MappingTemplate[] {
+  if (isCloud()) return cloud.data.templates;
   const saved = localStorage.getItem(TEMPLATES_KEY);
   if (!saved) return [];
   const parsed: unknown = JSON.parse(saved);
   return Array.isArray(parsed) ? parsed as MappingTemplate[] : [];
 }
 
-export function saveTemplate(template: MappingTemplate): MappingTemplate[] {
+export async function saveTemplate(template: MappingTemplate): Promise<MappingTemplate[]> {
   const next = [template, ...loadTemplates().filter((item) => item.name !== template.name)];
-  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next));
+  if (isCloud()) await saveCloud("templates",next);
+  else localStorage.setItem(TEMPLATES_KEY, JSON.stringify(next));
   return next;
 }

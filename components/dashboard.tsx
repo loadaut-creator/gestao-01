@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { CloudGate } from "./cloud/cloud-gate";
+import { CloudSettings } from "./cloud/cloud-settings";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { TeamPage } from "@/components/team/team-page";
@@ -146,7 +148,9 @@ function SectionContent({ page }: { page: Page }) {
   return <><div className="section-banner"><div className="banner-icon"><Icon size={27}/></div><div><span>ESTRUTURA DA PÁGINA</span><h2>{item.title}</h2><p>Esta área está preparada visualmente para as funcionalidades do bloco correspondente.</p></div><span className="banner-tag">Bloco 01</span></div><div className="section-card-grid">{item.cards.map(({title,text,icon:CardIcon})=><article className="feature-card" key={title}><div className="feature-icon"><CardIcon size={22}/></div><h3>{title}</h3><p>{text}</p><div className="feature-footer"><span>Planejado para próxima etapa</span><ArrowRight size={17}/></div></article>)}</div><div className="section-bottom panel"><div className="section-bottom-icon"><ClipboardList size={21}/></div><div><strong>Próximos passos desta área</strong><p>As regras, cadastros, filtros e integração de dados serão adicionados no bloco específico, após sua aprovação.</p></div></div></>;
 }
 
-export function Dashboard({ page }: { page: Page }) {
+export function Dashboard({ page }: { page: Page }) { return <CloudGate><DashboardContent page={page}/></CloudGate>; }
+
+function DashboardContent({ page }: { page: Page }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : <SectionContent page={page}/>}</main></div></div>;
+  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
 }

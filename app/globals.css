@@ -594,3 +594,9 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .goal-numbers strong { overflow-wrap: anywhere; }
 .monthly-allocation form > .form-help { margin-bottom: 0; }
 @media (max-width: 600px) { .allocation-sectors { grid-template-columns: 1fr; } .allocation-footer { align-items: stretch; flex-direction: column; } .allocation-controls > .form-field { max-width: none; } }
+.cloud-banner { display: flex; justify-content: center; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); color: var(--color-heading); background: #edf5ff; border-bottom: 1px solid var(--color-border); font-size: var(--font-caption); }
+.cloud-banner a, .cloud-banner button { color: var(--navy); text-decoration: underline; }
+.cloud-banner button { border: 0; background: transparent; cursor: pointer; font: inherit; }
+.cloud-actions { display: flex; align-items: end; flex-wrap: wrap; gap: var(--space-3); margin: var(--space-4) 0; }
+.cloud-state { max-width: 640px; margin: var(--space-8) auto; }
+@media(max-width:600px) { .cloud-actions { align-items: stretch; flex-direction: column; } .cloud-banner { justify-content: flex-start; } }
