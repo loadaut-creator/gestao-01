@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, Link2, Trash2, UserCheck, Users, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, Trash2, UserCheck, Users, X } from "lucide-react";
 import {
   cleanEmployeeInput, EMPTY_EMPLOYEE, normalizeKey, salesRoleFromTitle, sectorFromRole, validateEmployee,
   type Employee, type EmployeeErrors, type EmployeeInput, type EmployeeStatus,
@@ -52,7 +52,7 @@ export function TeamPage() {
   ), [employees, roleFilter, statusFilter]);
   const jobTitles = useMemo(() => [...new Set(employees.map((employee) => employee.jobTitle || employee.role))].sort((a, b) => a.localeCompare(b, "pt-BR")), [employees]);
   const activeCount = employees.filter((employee) => employee.status === "ativo").length;
-  const withoutBi = employees.filter((employee) => !employee.biIdentifier).length;
+
 
   function inspectRoster() {
     const parsed = parseRosterText(biText);
@@ -154,13 +154,13 @@ export function TeamPage() {
     <section className="team-summary" aria-label="Resumo da equipe">
       <div className="panel team-summary-card"><span>Cadastrados</span><strong>{employees.length}</strong><Users size={21}/></div>
       <div className="panel team-summary-card"><span>Ativos</span><strong>{activeCount}</strong><UserCheck size={21}/></div>
-      <div className="panel team-summary-card"><span>Sem vínculo BI</span><strong>{withoutBi}</strong><Link2 size={21}/></div>
+
     </section>
 
     {notice && <div className={`team-notice ${notice.kind}`} role="status" aria-live="polite">{notice.kind === "success" && <CheckCircle2 size={18}/>}<span>{notice.text}</span></div>}
 
     <section className="panel team-list-panel" aria-labelledby="team-list-title">
-      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastre, edite e gerencie o acesso da equipe.</p></div></div>
+      <div className="team-list-header"><div><h2 id="team-list-title">Funcionários</h2></div></div>
 
       {formOpen && <form className="team-form" onSubmit={submit} noValidate>
         <div className="team-form-heading"><div><h3>{editingId ? "Editar funcionário" : "Novo funcionário"}</h3><p>Preencha os dados do colaborador.</p></div><button type="button" className="icon-button" onClick={() => setFormOpen(false)} aria-label="Fechar formulário"><X size={19}/></button></div>
@@ -175,14 +175,14 @@ export function TeamPage() {
         <div className="team-form-actions"><button type="button" className="button button-neutral" onClick={() => setFormOpen(false)}>Cancelar</button><button type="submit" className="button button-primary">{editingId ? "Salvar alterações" : "Cadastrar funcionário"}</button></div>
       </form>}
 
-      <div className="team-filters"><div className="form-field"><label htmlFor="filter-role">Cargo</label><select id="filter-role" className="form-control" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}><option value="todos">Todos os cargos</option>{jobTitles.map((title) => <option key={title} value={title}>{title}</option>)}</select></div><div className="form-field"><label htmlFor="filter-status">Status</label><select id="filter-status" className="form-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as EmployeeStatus | "todos")}><option value="todos">Todos os status</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select></div><span className="team-filter-count">{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}</span></div>
+      <div className="team-filters"><div className="form-field"><label htmlFor="filter-role">Cargo</label><div className="team-select-control"><Users size={17} className="team-filter-icon" aria-hidden="true"/><select id="filter-role" className="form-control" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}><option value="todos">Todos os cargos</option>{jobTitles.map((title) => <option key={title} value={title}>{title}</option>)}</select><ChevronDown size={16} className="team-filter-chevron" aria-hidden="true"/></div></div><div className="form-field"><label htmlFor="filter-status">Status</label><div className="team-select-control"><UserCheck size={17} className="team-filter-icon" aria-hidden="true"/><select id="filter-status" className="form-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as EmployeeStatus | "todos")}><option value="todos">Todos os status</option><option value="ativo">Ativos</option><option value="inativo">Inativos</option></select><ChevronDown size={16} className="team-filter-chevron" aria-hidden="true"/></div></div><span className="team-filter-count">{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}</span></div>
 
     </section>
 
       {!loaded ? <p className="panel team-empty">Carregando equipe…</p> : filtered.length === 0 ? <div className="panel team-empty"><Users size={25}/><strong>{employees.length ? "Nenhum funcionário neste filtro" : "Nenhum funcionário cadastrado"}</strong><p>{employees.length ? "Altere os filtros para ver outros colaboradores." : "Cole os dados do BI abaixo para cadastrar os colaboradores."}</p></div> : <div className="team-groups">{jobTitles.map((role) => {
         const group = filtered.filter((employee) => (employee.jobTitle || employee.role) === role).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
         if (!group.length) return null;
-        return <section className="panel team-group" key={role} aria-label={`Equipe: ${role}`}><div className="team-group-heading"><h3>{role}</h3><span>{group.length} {group.length === 1 ? "pessoa" : "pessoas"}</span></div><div className="table-scroll" tabIndex={0} role="region" aria-label={`Funcionários do cargo ${role}`}><table className="team-table"><thead><tr><th scope="col">Nome</th><th scope="col">Matrícula</th><th scope="col">Admissão</th><th scope="col">Ativo</th>{canDelete && <th scope="col">Excluir</th>}</tr></thead><tbody>{group.map((employee) => <tr key={employee.id}><th scope="row"><button type="button" className="team-name-edit" onClick={() => openEdit(employee)} aria-label={`Editar ${employee.name}`}>{employee.name}</button></th><td>{employee.registration}</td><td>{formatDate(employee.hiredAt)}</td><td><label className="team-status-toggle"><input type="checkbox" role="switch" checked={employee.status === "ativo"} onChange={() => toggleStatus(employee)} aria-label={`${employee.status === "ativo" ? "Desativar" : "Ativar"} ${employee.name}`}/><span aria-hidden="true"/></label></td>{canDelete && <td><button type="button" className="team-delete-employee" onClick={() => removeEmployee(employee)} disabled={deleting} aria-label={`Excluir ${employee.name}, matrícula ${employee.registration}`} title="Excluir funcionário"><Trash2 size={18} aria-hidden="true"/></button></td>}</tr>)}</tbody></table></div><p className="table-scroll-hint">Deslize para ver todas as colunas →</p></section>;
+        return <section className="panel team-group" key={role} aria-label={`Equipe: ${role}`}><div className="team-group-heading"><h3>{role}</h3><span>{group.length} {group.length === 1 ? "pessoa" : "pessoas"}</span></div><div className="table-scroll" tabIndex={0} role="region" aria-label={`Funcionários do cargo ${role}`}><table className="team-table"><thead><tr><th scope="col">Nome</th><th scope="col">Matrícula</th><th scope="col" className="team-admission-column">Admissão</th><th scope="col">Ativo</th>{canDelete && <th scope="col">Excluir</th>}</tr></thead><tbody>{group.map((employee) => <tr key={employee.id}><th scope="row"><button type="button" className="team-name-edit" onClick={() => openEdit(employee)} aria-label={`Editar ${employee.name}`} title={employee.name}><span className="team-name-full">{employee.name}</span><span className="team-name-short">{employee.name.trim().split(/\s+/).slice(0,2).join(" ")}</span></button><span className="team-mobile-admission">Admissão: {formatDate(employee.hiredAt)}</span></th><td>{employee.registration}</td><td className="team-admission-column">{formatDate(employee.hiredAt)}</td><td><label className="team-status-toggle"><input type="checkbox" role="switch" checked={employee.status === "ativo"} onChange={() => toggleStatus(employee)} aria-label={`${employee.status === "ativo" ? "Desativar" : "Ativar"} ${employee.name}`}/><span aria-hidden="true"/></label></td>{canDelete && <td><button type="button" className="team-delete-employee" onClick={() => removeEmployee(employee)} disabled={deleting} aria-label={`Excluir ${employee.name}, matrícula ${employee.registration}`} title="Excluir funcionário"><Trash2 size={18} aria-hidden="true"/></button></td>}</tr>)}</tbody></table></div><p className="table-scroll-hint">Deslize para ver todas as colunas →</p></section>;
       })}</div>}
 
     <section className="panel bi-reconciliation" aria-labelledby="bi-reconciliation-title">
