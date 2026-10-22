@@ -50,3 +50,7 @@ Credenciais, dependências, arquivos de compilação e capturas locais ficam for
 ## Banco e autenticação na nuvem
 
 A integração D1 + Pages Functions + Cloudflare Access está implementada com ativação controlada. Siga [o roteiro de ativação](docs/cloudflare-database.md). Sem CLOUD_ENABLED=1, a versão continua local para permitir o backup antes da migração. Valide a API com `npm run test:cloud`.
+
+## Login próprio por usuário ou matrícula
+
+A tela em `/login/` está pronta. Para substituir o Cloudflare Access por sessões próprias, siga [o roteiro de ativação](docs/login-proprio.md), aplique `migrations/0002_site_login.sql` e configure os hashes como Secrets do Pages. Sem SITE_LOGIN_ENABLED=1, o acesso anterior continua funcionando. O painel do colaborador e a API mostram somente as vendas vinculadas ao próprio cadastro ativo.

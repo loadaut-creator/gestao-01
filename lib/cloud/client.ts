@@ -2,14 +2,14 @@ import type { Employee } from "../team/model";
 import type { MonthlyGoal } from "../goals/model";
 import type { MappingTemplate } from "../bi/model";
 import type { Resource } from "./validation";
-export type CloudSession={mode:"local"|"cloud";email?:string;role?:"admin"|"manager"|"viewer"};
+export type CloudSession={mode:"local"|"cloud";email?:string;role?:"admin"|"manager"|"viewer"|"employee";authenticated?:boolean;login?:"site";username?:string;name?:string;jobTitle?:string;employeeId?:string};
 export const cloud:{session:CloudSession;data:{employees:Employee[];goals:MonthlyGoal[];templates:MappingTemplate[];users:{email:string;role:string;active:boolean}[]};versions:Record<string,number>}={session:{mode:"local"},data:{employees:[],goals:[],templates:[],users:[]},versions:{}};
 export const isCloud=()=>cloud.session.mode==="cloud";
 export async function api<T>(path:string, options:RequestInit={}):Promise<T> {
   const response=await fetch(`/api/${path}`,{...options,credentials:"same-origin",cache:"no-store",signal:AbortSignal.timeout(30000),headers:{"Content-Type":"application/json",...options.headers}});
   if(!response.headers.get("content-type")?.includes("application/json")) throw new Error("Não foi possível acessar o serviço. Entre novamente ou confira a configuração.");
   const data=await response.json();
-  if(!response.ok) throw new Error((data as {error?:string}).error||"Não foi possível salvar. Tente novamente.");
+  if(!response.ok) throw Object.assign(new Error((data as {error?:string}).error||"Não foi possível salvar. Tente novamente."),{status:response.status});
   return data as T;
 }
 export async function refreshCloud() {
@@ -30,5 +30,5 @@ export async function saveCloud(resource:Resource,data:unknown) {
 export async function bootstrapCloud() {
   try { cloud.session=await api<CloudSession>("session"); }
   catch(error) { if(["localhost","127.0.0.1"].includes(location.hostname)){cloud.session={mode:"local"};return;} throw error; }
-  if(isCloud()) await refreshCloud();
+  if(isCloud()&&cloud.session.authenticated!==false) await refreshCloud();
 }

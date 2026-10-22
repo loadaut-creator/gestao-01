@@ -10,12 +10,13 @@ const require=createRequire(import.meta.url);const ts=require('typescript');
 const cache=new Map();let publicJwk;
 function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(file);const exports={};cache.set(file,exports);
  const source=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
- const localRequire=id=>id.startsWith('.')?load(path.resolve(path.dirname(file),id+'.ts')):require(id);
+ const localRequire=id=>id.startsWith('.')?load(path.resolve(path.dirname(file),id+'.ts')):id.startsWith('@/')?load(id.slice(2)+'.ts'):require(id);
  vm.runInNewContext(source,{exports,require:localRequire,crypto:webcrypto,Request,Response,TextEncoder,TextDecoder,atob,console,URL,Error,fetch:async()=>Response.json({keys:[publicJwk]})});return exports;
 }
 const handler=load('functions/api/[[path]].ts').onRequest;
 const migration=load('lib/cloud/migration.ts');
 const db=new DatabaseSync(':memory:');db.exec(fs.readFileSync('migrations/0001_cloud.sql','utf8').replace(/^\uFEFF/,''));
+db.exec(fs.readFileSync('migrations/0002_site_login.sql','utf8'));
 const binding={prepare(sql){return{bind(...args){return{async first(){return db.prepare(sql).get(...args)||null},async all(){return{results:db.prepare(sql).all(...args)}} ,run(){return db.prepare(sql).run(...args)}}}}},async batch(statements){db.exec('BEGIN');try{for(const statement of statements)statement.run();db.exec('COMMIT');return[]}catch(e){db.exec('ROLLBACK');throw e}}};
 const env={DB:binding,CLOUD_ENABLED:'1',ACCESS_TEAM_DOMAIN:'test.cloudflareaccess.com',ACCESS_AUD:'aud-test',ADMIN_EMAIL:'admin@example.com'};
 const pair=await webcrypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
@@ -77,4 +78,44 @@ test('sem ativação, o deploy preserva o modo local e não expõe dados',async(
  assert.equal((await session.json()).mode,'local');
  const state=await handler({env:{CLOUD_ENABLED:'0'},params:{path:['state']},request:new Request('https://app.example.com/api/state')});
  assert.equal(state.status,503);
+});
+const siteAuth=load('lib/cloud/site-auth.ts');
+const siteEnv={...env,SITE_LOGIN_ENABLED:'1',ADMIN_USERNAME:'admin-test',ADMIN_PASSWORD_HASH:'pbkdf2-sha256-100000$adminsalt$'+await siteAuth.passwordHash('test-admin-password','adminsalt'),EMPLOYEE_PASSWORD_HASH:'pbkdf2-sha256-100000$employeesalt$'+await siteAuth.passwordHash('test-staff-password','employeesalt')};
+async function siteRequest(route,method='GET',body,cookie='',ip='198.51.100.7',origin='https://app.example.com'){
+ return handler({env:siteEnv,params:{path:route.split('?')[0].split('/')},request:new Request('https://app.example.com/api/'+route,{method,headers:{'Content-Type':'application/json',Origin:origin,'CF-Connecting-IP':ip,Cookie:cookie},...body!==undefined?{body:JSON.stringify(body)}:{}})});
+}
+const person=(id,name,registration,status='ativo')=>({id,name,registration,status,role:'Balconista',jobTitle:'BALC. MEDICAMENTO',sector:'Balcão',hiredAt:'2020-01-01',biIdentifier:name,createdAt:'2026-01-01T00:00:00.000Z',updatedAt:'2026-01-01T00:00:00.000Z'});
+function addPerson(employee){db.prepare("INSERT OR REPLACE INTO documents VALUES(?,?,?,?)").run('visao-308','employees',employee.id,JSON.stringify(employee));}
+test('login próprio: credenciais, cookies seguros, logout e bloqueio de sessão falsa',async()=>{
+ const unauth=await(await siteRequest('session')).json();assert.equal(unauth.authenticated,false);
+ assert.equal((await siteRequest('state')).status,401);
+ assert.equal((await siteRequest('auth/login','POST',{username:'admin-test',password:'wrong'})).status,401);
+ assert.equal((await siteRequest('auth/login','POST',{username:'admin-test',password:'test-admin-password'},'','198.51.100.7','https://evil.example')).status,403);
+ const login=await siteRequest('auth/login','POST',{username:'admin-test',password:'test-admin-password',remember:true});
+ assert.equal(login.status,200);const cookie=login.headers.get('set-cookie');
+ assert.match(cookie,/HttpOnly/);assert.match(cookie,/Secure/);assert.match(cookie,/SameSite=Lax/);assert.match(cookie,/Max-Age=604800/);
+ const session=await login.json();assert.equal(session.role,'admin');assert.equal(session.password,undefined);
+ assert.equal((await siteRequest('state','GET',undefined,cookie.split(';')[0])).status,200);
+ assert.equal((await siteRequest('state','GET',undefined,'__Host-visao_session='+ 'a'.repeat(64))).status,401);
+ assert.equal((await siteRequest('auth/logout','POST',{},cookie.split(';')[0])).status,200);
+ assert.equal((await siteRequest('state','GET',undefined,cookie.split(';')[0])).status,401);
+});
+test('matrícula: só suas vendas e dados, bloqueio de escrita e de funcionário inativo',async()=>{
+ addPerson(person('employee-1','Ana','100'));addPerson(person('employee-2','Beatriz','200'));
+ const mixed={...record,id:'scope1',rowCount:2,totalSale:1000,records:[record.records[0],{...record.records[0],sourceRow:3,seller:'Beatriz',sale:900,raw:{Vendedor:'Beatriz',Venda:'900'}}]};
+ assert.equal((await request('imports','POST',mixed,admin)).status,201);
+ const login=await siteRequest('auth/login','POST',{username:'100',password:'test-staff-password'});assert.equal(login.status,200);
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const state=await(await siteRequest('state','GET',undefined,cookie)).json();assert.equal(state.data.employees.length,1);assert.equal(state.data.employees[0].id,'employee-1');assert.equal(state.data.goals.length,0);
+ const imports=await(await siteRequest('imports?employeeId=employee-2','GET',undefined,cookie)).json();
+ assert.equal(imports.length,1);assert.equal(imports[0].totalSale,100);assert.equal(imports[0].rowCount,1);assert.equal(imports[0].records[0].seller,'Ana');assert.equal(JSON.stringify(imports).includes('Beatriz'),false);
+ for(const [route,method] of [['employees','PUT'],['goals','PUT'],['imports','POST'],['imports/scope1','DELETE'],['users','PUT'],['validate-migration','POST']]) assert.equal((await siteRequest(route,method,{},cookie)).status,403);
+ assert.equal((await siteRequest('audit','GET',undefined,cookie)).status,404);
+ addPerson(person('employee-1','Ana','100','inativo'));
+ assert.equal((await siteRequest('state','GET',undefined,cookie)).status,401);
+ assert.equal((await siteRequest('auth/login','POST',{username:'100',password:'test-staff-password'})).status,401);
+});
+test('tentativas de login limitadas no servidor',async()=>{
+ for(let i=0;i<10;i++)assert.equal((await siteRequest('auth/login','POST',{username:'absent',password:'wrong'},'','198.51.100.99')).status,401);
+ const blocked=await siteRequest('auth/login','POST',{username:'absent',password:'wrong'},'','198.51.100.99');assert.equal(blocked.status,429);assert.equal(blocked.headers.get('retry-after'),'900');
 });

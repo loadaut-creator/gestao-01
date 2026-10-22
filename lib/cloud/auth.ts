@@ -1,4 +1,4 @@
-export type CloudEnv = { DB:D1Database; ACCESS_TEAM_DOMAIN:string; ACCESS_AUD:string; ADMIN_EMAIL:string; STORE_ID?:string; CLOUD_ENABLED?:string };
+export type CloudEnv = { DB:D1Database; ACCESS_TEAM_DOMAIN:string; ACCESS_AUD:string; ADMIN_EMAIL:string; STORE_ID?:string; CLOUD_ENABLED?:string; SITE_LOGIN_ENABLED?:string; ADMIN_USERNAME?:string; ADMIN_PASSWORD_HASH?:string; EMPLOYEE_PASSWORD_HASH?:string };
 let keys: {host:string;expires:number;keys:(JsonWebKey & {kid?:string})[]} | undefined;
 const decode=(part:string)=>Uint8Array.from(atob(part.replace(/-/g,"+").replace(/_/g,"/")),c=>c.charCodeAt(0));
 export async function authenticate(request:Request,env:CloudEnv) {

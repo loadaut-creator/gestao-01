@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { CloudGate } from "./cloud/cloud-gate";
+import { EmployeeDashboard } from "./cloud/employee-dashboard";
+import { cloud } from "@/lib/cloud/client";
 import { CloudSettings } from "./cloud/cloud-settings";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -152,5 +154,6 @@ export function Dashboard({ page }: { page: Page }) { return <CloudGate><Dashboa
 
 function DashboardContent({ page }: { page: Page }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  if(cloud.session.role==="employee")return <EmployeeDashboard/>;
   return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
 }

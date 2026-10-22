@@ -1,6 +1,8 @@
 import { authenticate, type CloudEnv } from "../../lib/cloud/auth";
 import { importSchema, parseDocuments, resources, userSchema, type Resource } from "../../lib/cloud/validation";
 import { z } from "zod";
+import { allEmployees, siteIdentity, siteLogin, siteLoginEnabled, siteLogout, siteSession } from "../../lib/cloud/site-auth";
+import { scopeEmployeeImports } from "../../lib/cloud/employee-scope";
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
 async function readJson(request:Request):Promise<unknown> {
   const reader=request.body?.getReader();if(!reader)throw new Response("Envie os dados da operação.",{status:400});
@@ -14,17 +16,22 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     const path=Array.isArray(params.path)?params.path.join("/"):params.path??"";
     if(path==="session" && env.CLOUD_ENABLED!=="1") return json({mode:"local"});
     if(env.CLOUD_ENABLED!=="1") return json({error:"Serviço na nuvem ainda não ativado."},503);
-    const email=await authenticate(request,env);
+    if(siteLoginEnabled(env)&&path==="auth/login"&&request.method==="POST")return await siteLogin(request,env);
+    if(siteLoginEnabled(env)&&path==="auth/logout"&&request.method==="POST")return await siteLogout(request,env);
+    const siteUser=siteLoginEnabled(env)?await siteIdentity(request,env):null;
+    if(siteLoginEnabled(env)&&path==="session")return json(siteSession(siteUser));
+    if(siteLoginEnabled(env)&&!siteUser)return json({error:"Entre no sistema para continuar."},401);
+    const email=siteUser?siteUser.identity:await authenticate(request,env);
     const store=env.STORE_ID || "visao-308";
-    const user=await env.DB.prepare("SELECT data FROM documents WHERE store_id=? AND resource='users' AND id=?").bind(store,email).first<{data:string}>();
-    const permission = user ? userSchema.parse(JSON.parse(user.data)) : email===env.ADMIN_EMAIL.trim().toLowerCase() ? {email,role:"admin",active:true} : null;
+    const user=siteUser?null:await env.DB.prepare("SELECT data FROM documents WHERE store_id=? AND resource='users' AND id=?").bind(store,email).first<{data:string}>();
+    const permission = siteUser ? {email,role:siteUser.kind,active:true} : user ? userSchema.parse(JSON.parse(user.data)) : email===env.ADMIN_EMAIL.trim().toLowerCase() ? {email,role:"admin",active:true} : null;
     if(!permission?.active) return json({error:"Seu usuário não tem acesso ao sistema."},403);
     const q=(sql:string,...values:(string|number|null)[])=>env.DB.prepare(sql).bind(...values);
     const audit=(action:string,resource:string)=>q("INSERT INTO audit_log VALUES(?,?,?,?,?,?)",crypto.randomUUID(),store,email,action,resource,new Date().toISOString());
     if(path==="session") return json({mode:"cloud",email,role:permission.role});
     if(request.method!=="GET") {
       if(request.headers.get("Origin")!==new URL(request.url).origin || request.headers.get("Content-Type")?.split(";")[0]!=="application/json") return json({error:"Origem ou formato inválido."},403);
-      if(permission.role==="viewer") return json({error:"Seu perfil permite apenas consulta."},403);
+      if(permission.role==="viewer"||permission.role==="employee") return json({error:"Seu perfil permite apenas consulta."},403);
       if(Number(request.headers.get("Content-Length")||0)>12000000) return json({error:"Arquivo muito grande. Divida a migração."},413);
     }
     const documents=async(resource:Resource)=>(await q("SELECT data FROM documents WHERE store_id=? AND resource=? ORDER BY id",store,resource).all<{data:string}>()).results.map(item=>JSON.parse(item.data));
@@ -36,6 +43,7 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
       return json({ok:true});
     }
     if(path==="state" && request.method==="GET") {
+      if(siteUser?.kind==="employee")return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[]},versions:{}});
       const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=?",store).all<{resource:string;version:number}>()).results;
       const entries=await Promise.all(resources.filter(resource=>resource!=="users"||permission.role==="admin").map(async resource=>[resource,await documents(resource)]));
       return json({data:Object.fromEntries(entries),versions:Object.fromEntries(revisions.map(item=>[item.resource,item.version]))});
@@ -58,7 +66,8 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
       const imports=(await q("SELECT id,data FROM imports WHERE store_id=?",store).all<{id:string;data:string}>()).results;
       const rows=(await q("SELECT import_id,data FROM sales_rows WHERE store_id=? ORDER BY import_id,position",store).all<{import_id:string;data:string}>()).results;
       const grouped=new Map<string,unknown[]>();for(const row of rows){const list=grouped.get(row.import_id)||[];list.push(JSON.parse(row.data));grouped.set(row.import_id,list);}
-      return json(imports.map(item=>({...JSON.parse(item.data),records:grouped.get(item.id)||[]})).sort((a,b)=>b.importedAt.localeCompare(a.importedAt)));
+      const result=imports.map(item=>({...JSON.parse(item.data),records:grouped.get(item.id)||[]})).sort((a,b)=>b.importedAt.localeCompare(a.importedAt));
+      return json(siteUser?.kind==="employee"?scopeEmployeeImports(result,siteUser.identity,await allEmployees(env)):result);
     }
     if(path==="imports" && request.method==="POST") {
       const record=importSchema.parse(await readJson(request));
