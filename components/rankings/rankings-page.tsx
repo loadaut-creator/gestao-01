@@ -1,10 +1,10 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
 import {Award,ChevronLeft,ChevronRight,Search} from "lucide-react";
-import {campaignRanking,formatCampaignValue,normalizeSearch,type Campaign} from "@/lib/campaigns/model";
+import {campaignRanking,formatCampaignValue,normalizeSearch,sectorCampaigns,type Campaign} from "@/lib/campaigns/model";
 import {groupActiveRankings} from "@/lib/campaigns/rankings";
 import {loadCampaigns,subscribeToCampaigns} from "@/lib/campaigns/repository";
-import {isCloud,refreshCloud} from "@/lib/cloud/client";
+import {cloud,isCloud,refreshCloud} from "@/lib/cloud/client";
 
 function RankingPanel({campaign}:{campaign:Campaign}) {
  const [search,setSearch]=useState(""),[page,setPage]=useState(0);
@@ -34,7 +34,7 @@ export function RankingsPage() {
   window.addEventListener("focus",sync);document.addEventListener("visibilitychange",sync);
   return()=>{active=false;unsubscribe();clearInterval(timer);window.removeEventListener("focus",sync);document.removeEventListener("visibilitychange",sync);};
  },[]);
- const groups=groupActiveRankings(campaigns),filtered=groups.filter(group=>!filter||group.key===filter);
+ const groups=groupActiveRankings(cloud.session.role==="employee"?sectorCampaigns(campaigns,cloud.data.employees[0]?.sector):campaigns),filtered=groups.filter(group=>!filter||group.key===filter);
  return <div className="rankings-page">
   {error&&<p className="team-notice error" role="alert">{error}</p>}
   {groups.length>1&&<div className="rankings-toolbar"><label className="form-field"><span>Linha da campanha</span><select className="form-control" value={filter} onChange={event=>setFilter(event.target.value)}><option value="">Todas as linhas</option>{groups.map(group=><option key={group.key} value={group.key}>{group.name}</option>)}</select></label><span>{groups.reduce((sum,group)=>sum+group.campaigns.length,0)} campanhas vigentes</span></div>}

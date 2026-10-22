@@ -202,20 +202,27 @@ test('vendas do mês e gráficos usam somente vendedores válidos dos dias impor
 });
 
 test('campanhas persistem com revisão e funcionário só consulta publicadas vigentes',async()=>{
- const data=[campaign,{...campaign,id:'draft',status:'draft'},{...campaign,id:'closed',status:'closed'},{...campaign,id:'future',startsAt:'2099-01-01'}];
+ const data=[campaign,{...campaign,id:'draft',status:'draft'},{...campaign,id:'closed',status:'closed'},{...campaign,id:'future',startsAt:'2099-01-01'},{...campaign,id:'perfume',sector:'Perfumaria'},{...campaign,id:'cashier',sector:'Caixa'},{...campaign,id:'all',sector:'Todos'}];
  assert.equal((await request('campaigns','PUT',{version:0,data},admin)).status,200);
  assert.equal((await request('campaigns','PUT',{version:0,data:[]},admin)).status,409);
- const state=await(await request('state','GET',undefined,admin)).json();assert.equal(state.data.campaigns.length,4);assert.equal(state.versions.campaigns,1);
+ const state=await(await request('state','GET',undefined,admin)).json();assert.equal(state.data.campaigns.length,7);assert.equal(state.versions.campaigns,1);
  assert.equal((await request('campaigns','PUT',{version:1,data:[]},await token('viewer@example.com'))).status,403);
  addPerson(person('campaign-employee','Teste Ranking','9088'));
  const login=await siteRequest('auth/login','POST',{username:'9088',password:'test-staff-password'},'','198.51.100.88');
  const cookie=login.headers.get('set-cookie').split(';')[0];
  const staff=await(await siteRequest('state','GET',undefined,cookie)).json();
- assert.equal(staff.data.campaigns.length,1);assert.equal(staff.versions.campaigns,1);assert.equal(staff.data.campaigns[0].powerBiUrl,'');assert.equal(staff.data.campaigns[0].ranking.rows[0].seller,'Pessoa externa');
+ assert.equal(staff.data.campaigns.length,2);assert.ok(staff.data.campaigns.every(c=>c.sector==='Balcão'||c.sector==='Todos'));assert.equal(staff.versions.campaigns,1);assert.equal(staff.data.campaigns[0].powerBiUrl,'');assert.equal(staff.data.campaigns[0].ranking.rows[0].seller,'Pessoa externa');
+ for(const [sector,role,registration] of [['Perfumaria','Perfumista','9091'],['Caixa','Caixa','9092'],['Outro','Outro','9093']]){
+  addPerson({...person('scope-'+registration,'Teste Setor',registration),sector,role});
+  const scopedLogin=await siteRequest('auth/login','POST',{username:registration,password:'test-staff-password'},'','198.51.100.90');
+  const scopedCookie=scopedLogin.headers.get('set-cookie').split(';')[0];
+  const scoped=await(await siteRequest('state','GET',undefined,scopedCookie)).json();
+  assert.equal(scoped.data.campaigns.length,sector==='Outro'?1:2);assert.ok(scoped.data.campaigns.every(c=>c.sector===sector||c.sector==='Todos'));
+ }
  assert.equal((await siteRequest('campaigns','PUT',{version:1,data:[]},cookie)).status,403);
  const backup={schemaVersion:1,employees:[],goals:[],templates:[],imports:[],campaigns:data};
- assert.equal(migration.backupSchema.parse(backup).campaigns.length,4);
+ assert.equal(migration.backupSchema.parse(backup).campaigns.length,7);
  const old={...backup};delete old.campaigns;assert.equal(migration.backupSchema.parse(old).campaigns.length,0);
- assert.equal(migration.mergeMigration(backup,{...backup,campaigns:[]}).campaigns.length,4);
+ assert.equal(migration.mergeMigration(backup,{...backup,campaigns:[]}).campaigns.length,7);
  assert.equal((await request('validate-migration','POST',backup,admin)).status,200);
 });

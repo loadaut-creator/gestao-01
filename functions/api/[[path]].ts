@@ -1,4 +1,4 @@
-import { visibleCampaigns, campaignSchema, type Campaign } from "../../lib/campaigns/model";
+import { sectorCampaigns, campaignSchema, type Campaign } from "../../lib/campaigns/model";
 import { authenticate, type CloudEnv } from "../../lib/cloud/auth";
 import { importSchema, parseDocuments, resources, userSchema, type Resource } from "../../lib/cloud/validation";
 import { z } from "zod";
@@ -46,7 +46,7 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     if(path==="state" && request.method==="GET") {
       if(siteUser?.kind==="employee") {
         const revision=await q("SELECT version FROM revisions WHERE store_id=? AND resource='campaigns'",store).first<{version:number}>();
-        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],campaigns:visibleCampaigns(await documents("campaigns") as Campaign[])},versions:{campaigns:revision?.version||0}});
+        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],campaigns:sectorCampaigns(await documents("campaigns") as Campaign[],siteUser.employee?.sector)},versions:{campaigns:revision?.version||0}});
       }
       const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=?",store).all<{resource:string;version:number}>()).results;
       const entries=await Promise.all(resources.filter(resource=>resource!=="users"||permission.role==="admin").map(async resource=>[resource,await documents(resource)]));

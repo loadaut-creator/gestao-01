@@ -27,6 +27,9 @@ export function campaignState(campaign:Campaign,today=localDate()) {
   return campaign.startsAt>today?"Agendada":"Vigente";
 }
 export function visibleCampaigns(campaigns:Campaign[],today=localDate()) { return campaigns.filter(item=>campaignState(item,today)==="Vigente").map(item=>({...item,powerBiUrl:""})); }
+export function sectorCampaigns(campaigns:Campaign[],sector:string|undefined,today=localDate()) {
+  return visibleCampaigns(campaigns,today).filter(campaign=>campaign.sector==="Todos"||campaign.sector===sector);
+}
 export function campaignRanking(campaign:Campaign) {
   let rank=0,previous:number|undefined;
   return [...(campaign.ranking?.rows||[])].sort((a,b)=>b.value-a.value||a.seller.localeCompare(b.seller,"pt-BR")).map((row,index)=>{
