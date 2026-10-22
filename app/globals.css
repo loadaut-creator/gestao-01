@@ -122,6 +122,20 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .profile-text strong, .profile-text span { display: block; }
 .profile-text strong { color: var(--color-heading); font-size: var(--font-label); font-weight: var(--weight-semibold); }
 .profile-text span { margin-top: var(--space-1); color: var(--color-secondary); font-size: var(--font-caption); }
+.profile-menu { position: relative; }
+.profile-menu summary { min-height: 44px; padding: var(--space-1) var(--space-2); border-radius: var(--space-2); cursor: pointer; list-style: none; }
+.profile-menu summary::-webkit-details-marker { display: none; }
+.profile-menu summary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+.profile-menu summary:hover, .profile-menu[open] summary { background: #edf5ff; }
+.profile-menu[open] summary > svg { transform: rotate(180deg); }
+.profile-dropdown { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 50; width: min(272px, calc(100vw - 32px)); padding: var(--space-2); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--space-3); box-shadow: 0 8px 24px #143d6b1a; }
+.profile-account { display: grid; gap: var(--space-1); padding: var(--space-3); border-bottom: 1px solid var(--color-border); overflow-wrap: anywhere; }
+.profile-account strong { color: var(--color-heading); font-size: var(--font-label); }
+.profile-account span { color: var(--color-secondary); font-size: var(--font-caption); }
+.profile-logout { display: flex; align-items: center; gap: var(--space-2); width: 100%; min-height: 44px; margin-top: var(--space-2); padding: var(--space-3); border: 0; border-radius: var(--space-2); background: transparent; color: var(--color-heading); font: inherit; font-size: var(--font-body); font-weight: var(--weight-semibold); cursor: pointer; text-align: left; }
+.profile-logout:hover { background: #edf5ff; color: var(--navy); }
+.profile-logout:disabled { opacity: .6; cursor: wait; }
+.profile-error { margin: var(--space-2); color: var(--color-danger, #b42318); font-size: var(--font-caption); }
 .icon-button { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: var(--radius-control); background: transparent; color: inherit; }
 .icon-button:hover { background: #eef4ff; }
 .mobile-menu, .mobile-close, .menu-overlay { display: none; }

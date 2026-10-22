@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { CloudGate } from "./cloud/cloud-gate";
+import { ProfileMenu } from "./cloud/profile-menu";
 import { EmployeeDashboard } from "./cloud/employee-dashboard";
 import { cloud } from "@/lib/cloud/client";
 import { CloudSettings } from "./cloud/cloud-settings";
@@ -15,7 +16,7 @@ import { subscribeToImports } from "@/lib/bi/repository";
 import { findEmployeeForSeller, type ImportRecord } from "@/lib/bi/model";
 import { ROLES, isSalesRole, type Employee, type Role } from "@/lib/team/model";
 import { loadEmployees, subscribeToEmployeeChanges } from "@/lib/team/repository";
-import { Activity, ArrowRight, ArrowUpRight, Award, BarChart3, CalendarDays, ChevronDown, CircleHelp, ClipboardList, FileBarChart2, Flag, Gift, LayoutDashboard, Menu, Settings2, Target, UploadCloud, Users, X } from "lucide-react";
+import { Activity, ArrowRight, ArrowUpRight, Award, BarChart3, CalendarDays, CircleHelp, ClipboardList, FileBarChart2, Flag, Gift, LayoutDashboard, Menu, Settings2, Target, UploadCloud, Users, X } from "lucide-react";
 
 export const pageKeys = ["inicio", "vendas", "metas", "campanhas", "rankings", "equipe", "importacao-bi", "relatorios", "configuracoes"] as const;
 type Page = (typeof pageKeys)[number];
@@ -90,7 +91,7 @@ function Sidebar({ page, close }: { page: Page; close: () => void }) {
 }
 
 function Header({ openMenu }: { openMenu: () => void }) {
-  return <header className="topbar"><div className="topbar-left"><button className="mobile-menu icon-button" onClick={openMenu} aria-label="Abrir menu"><Menu size={22}/></button></div><div className="profile"><div className="avatar">G</div><div className="profile-text"><strong>Gerente da loja</strong><span>Administrador</span></div><ChevronDown size={16}/></div></header>;
+  return <header className="topbar"><div className="topbar-left"><button className="mobile-menu icon-button" onClick={openMenu} aria-label="Abrir menu"><Menu size={22}/></button></div><ProfileMenu/></header>;
 }
 
 function Intro({ page }: { page: Page }) {
