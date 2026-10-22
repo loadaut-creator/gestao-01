@@ -1,4 +1,5 @@
 import { unzipSync, strFromU8 } from "fflate";
+import { excelNumericText } from "./numbers";
 
 export type ParsedTable = { columns: string[]; rows: string[][]; sheetName?: string };
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
@@ -97,7 +98,7 @@ function parseXlsx(buffer: ArrayBuffer): { matrix: string[][]; sheetName?: strin
       if (index < 0 || index > 250) continue;
       const type = cell.getAttribute("t");
       const value = type === "inlineStr" ? childText(cell, "t") : childText(cell, "v");
-      cells[index] = type === "s" ? shared[Number(value)] ?? "" : value;
+      cells[index] = type === "s" ? shared[Number(value)] ?? "" : !type || type === "n" ? excelNumericText(value) : value;
     }
     return Array.from({ length: cells.length }, (_, index) => cells[index] ?? "");
   }).filter((row) => row.some((value) => value.trim()));

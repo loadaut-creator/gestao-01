@@ -14,6 +14,16 @@ function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(
  vm.runInNewContext(source,{exports,require:localRequire,crypto:webcrypto,Request,Response,TextEncoder,TextDecoder,atob,console,URL,Error,fetch:async()=>Response.json({keys:[publicJwk]})});return exports;
 }
 const handler=load('functions/api/[[path]].ts').onRequest;
+const biNumbers=load('lib/bi/numbers.ts');
+const biModel=load('lib/bi/model.ts');
+test('decimais numéricos do Excel não viram milhares na leitura em português',()=>{
+ for(const [raw,expected] of [['261.243',261.243],['145.044',145.044],['2.985',2.985],['93.8949',93.8949],['1234',1234],['-2.985',-2.985],['0',0]]) {
+  assert.equal(biModel.parseLocaleNumber(biNumbers.excelNumericText(raw)),expected);
+ }
+ assert.equal(biModel.parseLocaleNumber('1.234,56'),1234.56);
+ assert.equal(biModel.parseLocaleNumber('1.234'),1234);
+ assert.equal(biModel.parseLocaleNumber(biNumbers.excelNumericText('')),null);
+});
 const migration=load('lib/cloud/migration.ts');
 const db=new DatabaseSync(':memory:');db.exec(fs.readFileSync('migrations/0001_cloud.sql','utf8').replace(/^\uFEFF/,''));
 db.exec(fs.readFileSync('migrations/0002_site_login.sql','utf8'));
