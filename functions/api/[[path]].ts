@@ -48,6 +48,21 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
       const entries=await Promise.all(resources.filter(resource=>resource!=="users"||permission.role==="admin").map(async resource=>[resource,await documents(resource)]));
       return json({data:Object.fromEntries(entries),versions:Object.fromEntries(revisions.map(item=>[item.resource,item.version]))});
     }
+    if(path.startsWith("employees/") && request.method==="DELETE") {
+      if(permission.role!=="admin") return json({error:"Apenas o administrador exclui funcionários."},403);
+      const id=path.slice("employees/".length);
+      const body=z.object({version:z.number().int().nonnegative()}).parse(await readJson(request));
+      const employee=await q("SELECT id FROM documents WHERE store_id=? AND resource='employees' AND id=?",store,id).first();
+      if(!employee) return json({error:"Funcionário não encontrado. Atualize a página."},404);
+      await env.DB.batch([
+        q("INSERT OR IGNORE INTO revisions VALUES(?,?,0)",store,"employees"),
+        q("UPDATE revisions SET version=? WHERE store_id=? AND resource='employees'",body.version+1,store),
+        q("DELETE FROM documents WHERE store_id=? AND resource='employees' AND id=?",store,id),
+        q("DELETE FROM site_sessions WHERE store_id=? AND kind='employee' AND identity=?",store,id),
+        audit("delete",`employees/${id}`),
+      ]);
+      return json({version:body.version+1});
+    }
     if(resources.includes(path as Resource) && request.method==="PUT") {
       const resource=path as Resource;
       if(resource==="users"&&permission.role!=="admin") return json({error:"Apenas o administrador gerencia acessos."},403);

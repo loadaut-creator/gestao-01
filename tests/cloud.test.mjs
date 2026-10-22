@@ -119,3 +119,28 @@ test('tentativas de login limitadas no servidor',async()=>{
  for(let i=0;i<10;i++)assert.equal((await siteRequest('auth/login','POST',{username:'absent',password:'wrong'},'','198.51.100.99')).status,401);
  const blocked=await siteRequest('auth/login','POST',{username:'absent',password:'wrong'},'','198.51.100.99');assert.equal(blocked.status,429);assert.equal(blocked.headers.get('retry-after'),'900');
 });
+
+test('exclusão de funcionário: permissões, concorrência, remoção no banco e revogação de sessões',async()=>{
+ addPerson(person('delete-me','Teste Exclusão','9030'));
+ addPerson(person('keep-me','Teste Preservado','9040'));
+ const login=await siteRequest('auth/login','POST',{username:'9030',password:'test-staff-password'},'','198.51.100.31');
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const version=db.prepare("SELECT version FROM revisions WHERE store_id='visao-308' AND resource='employees'").get()?.version||0;
+ const countImports=db.prepare('SELECT count(*) AS n FROM imports').get().n;
+ assert.equal((await siteRequest('employees/delete-me','DELETE',{version},cookie)).status,403);
+ assert.equal((await request('employees/delete-me','DELETE',{version},await token('manager@example.com'))).status,403);
+ assert.equal((await request('employees/delete-me','DELETE',{version},admin,'https://evil.example')).status,403);
+ assert.equal((await request('employees/delete-me','DELETE',{version:version+3},admin)).status,409);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM documents WHERE resource='employees' AND id='delete-me'").get().n,1);
+ assert.equal((await siteRequest('state','GET',undefined,cookie)).status,200);
+ const result=await request('employees/delete-me','DELETE',{version},admin);
+ assert.equal(result.status,200);assert.equal((await result.json()).version,version+1);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM documents WHERE resource='employees' AND id='delete-me'").get().n,0);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM site_sessions WHERE identity='delete-me'").get().n,0);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM documents WHERE resource='employees' AND id='keep-me'").get().n,1);
+ assert.equal(db.prepare('SELECT count(*) AS n FROM imports').get().n,countImports);
+ assert.equal(db.prepare("SELECT count(*) AS n FROM audit_log WHERE action='delete' AND resource='employees/delete-me'").get().n,1);
+ assert.equal((await siteRequest('state','GET',undefined,cookie)).status,401);
+ assert.equal((await siteRequest('auth/login','POST',{username:'9030',password:'test-staff-password'},'','198.51.100.31')).status,401);
+ assert.equal((await request('employees/delete-me','DELETE',{version:version+1},admin)).status,404);
+});

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { CheckCircle2, Link2, UserCheck, Users, X } from "lucide-react";
+import { CheckCircle2, Link2, Trash2, UserCheck, Users, X } from "lucide-react";
 import {
   cleanEmployeeInput, EMPTY_EMPLOYEE, normalizeKey, salesRoleFromTitle, sectorFromRole, validateEmployee,
   type Employee, type EmployeeErrors, type EmployeeInput, type EmployeeStatus,
 } from "@/lib/team/model";
-import { loadEmployees, saveEmployees, subscribeToEmployeeChanges } from "@/lib/team/repository";
+import { deleteEmployee, loadEmployees, saveEmployees, subscribeToEmployeeChanges } from "@/lib/team/repository";
+import { cloud, isCloud } from "@/lib/cloud/client";
 import { parseRosterText, type RosterDraft } from "@/lib/team/roster";
 import { TeamDatePicker } from "@/components/team/team-date-picker";
 
@@ -30,6 +31,8 @@ export function TeamPage() {
   const [biText, setBiText] = useState("");
   const [roster, setRoster] = useState<RosterDraft[]>([]);
   const [rosterErrors, setRosterErrors] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
+  const canDelete = !isCloud() || cloud.session.role === "admin";
 
   useEffect(() => {
     let active = true;
@@ -133,6 +136,20 @@ export function TeamPage() {
     await persist(next, status === "ativo" ? "Funcionário reativado." : "Funcionário inativado.");
   }
 
+  async function removeEmployee(employee: Employee) {
+    if (deleting || !window.confirm(`Excluir definitivamente ${employee.name} (matrícula ${employee.registration}) da Equipe?\n\nO cadastro será removido do banco de dados e o acesso ao site será encerrado. O histórico de vendas importadas será preservado. Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    setNotice(null);
+    try {
+      await deleteEmployee(employee.id);
+      setEmployees(loadEmployees());
+      if (editingId === employee.id) { setFormOpen(false); setEditingId(null); }
+      setNotice({ kind: "success", text: "Funcionário excluído." });
+    } catch (error) {
+      setNotice({ kind: "error", text: error instanceof Error ? error.message : "Não foi possível excluir o funcionário." });
+    } finally { setDeleting(false); }
+  }
+
   return <div className="team-page">
     <section className="team-summary" aria-label="Resumo da equipe">
       <div className="panel team-summary-card"><span>Total cadastrado</span><strong>{employees.length}</strong><Users size={21}/></div>
@@ -143,7 +160,7 @@ export function TeamPage() {
     {notice && <div className={`team-notice ${notice.kind}`} role="status" aria-live="polite">{notice.kind === "success" && <CheckCircle2 size={18}/>}<span>{notice.text}</span></div>}
 
     <section className="panel team-list-panel" aria-labelledby="team-list-title">
-      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastro e vínculo com o identificador do BI. Os dados são salvos no ambiente indicado no topo da tela.</p></div></div>
+      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastro e vínculo com o identificador do BI. Gerencie os funcionários e seus acessos ao sistema.</p></div></div>
 
       {formOpen && <form className="team-form" onSubmit={submit} noValidate>
         <div className="team-form-heading"><div><h3>{editingId ? "Editar funcionário" : "Novo funcionário"}</h3><p>Preencha os dados do colaborador.</p></div><button type="button" className="icon-button" onClick={() => setFormOpen(false)} aria-label="Fechar formulário"><X size={19}/></button></div>
@@ -163,7 +180,7 @@ export function TeamPage() {
       {!loaded ? <p className="team-empty">Carregando equipe…</p> : filtered.length === 0 ? <div className="team-empty"><Users size={25}/><strong>{employees.length ? "Nenhum funcionário neste filtro" : "Nenhum funcionário cadastrado"}</strong><p>{employees.length ? "Altere os filtros para ver outros colaboradores." : "Cole os dados do BI abaixo para cadastrar os colaboradores."}</p></div> : jobTitles.map((role) => {
         const group = filtered.filter((employee) => (employee.jobTitle || employee.role) === role).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
         if (!group.length) return null;
-        return <div className="team-group" key={role}><div className="team-group-heading"><h3>{role}</h3><span>{group.length} {group.length === 1 ? "pessoa" : "pessoas"}</span></div><div className="table-scroll" tabIndex={0} role="region" aria-label={`Funcionários do cargo ${role}`}><table className="team-table"><thead><tr><th scope="col">Nome</th><th scope="col">Matrícula</th><th scope="col">Setor</th><th scope="col">Admissão</th><th scope="col">ID no BI</th><th scope="col">Ativo</th></tr></thead><tbody>{group.map((employee) => <tr key={employee.id}><th scope="row"><button type="button" className="team-name-edit" onClick={() => openEdit(employee)} aria-label={`Editar ${employee.name}`}>{employee.name}</button></th><td>{employee.registration}</td><td>{employee.sector}</td><td>{formatDate(employee.hiredAt)}</td><td>{employee.biIdentifier || <span className="missing-bi">Não vinculado</span>}</td><td><label className="team-status-toggle"><input type="checkbox" role="switch" checked={employee.status === "ativo"} onChange={() => toggleStatus(employee)} aria-label={`${employee.status === "ativo" ? "Desativar" : "Ativar"} ${employee.name}`}/><span aria-hidden="true"/></label></td></tr>)}</tbody></table></div><p className="table-scroll-hint">Deslize para ver todas as colunas →</p></div>;
+        return <div className="team-group" key={role}><div className="team-group-heading"><h3>{role}</h3><span>{group.length} {group.length === 1 ? "pessoa" : "pessoas"}</span></div><div className="table-scroll" tabIndex={0} role="region" aria-label={`Funcionários do cargo ${role}`}><table className="team-table"><thead><tr><th scope="col">Nome</th><th scope="col">Matrícula</th><th scope="col">Setor</th><th scope="col">Admissão</th><th scope="col">ID no BI</th><th scope="col">Ativo</th>{canDelete && <th scope="col">Excluir</th>}</tr></thead><tbody>{group.map((employee) => <tr key={employee.id}><th scope="row"><button type="button" className="team-name-edit" onClick={() => openEdit(employee)} aria-label={`Editar ${employee.name}`}>{employee.name}</button></th><td>{employee.registration}</td><td>{employee.sector}</td><td>{formatDate(employee.hiredAt)}</td><td>{employee.biIdentifier || <span className="missing-bi">Não vinculado</span>}</td><td><label className="team-status-toggle"><input type="checkbox" role="switch" checked={employee.status === "ativo"} onChange={() => toggleStatus(employee)} aria-label={`${employee.status === "ativo" ? "Desativar" : "Ativar"} ${employee.name}`}/><span aria-hidden="true"/></label></td>{canDelete && <td><button type="button" className="team-delete-employee" onClick={() => removeEmployee(employee)} disabled={deleting} aria-label={`Excluir ${employee.name}, matrícula ${employee.registration}`} title="Excluir funcionário"><Trash2 size={18} aria-hidden="true"/></button></td>}</tr>)}</tbody></table></div><p className="table-scroll-hint">Deslize para ver todas as colunas →</p></div>;
       })}
     </section>
 

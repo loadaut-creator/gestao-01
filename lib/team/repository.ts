@@ -1,4 +1,4 @@
-import { cloud, isCloud, saveCloud } from "../cloud/client";
+import { api, cloud, isCloud, saveCloud } from "../cloud/client";
 import type { Employee } from "./model";
 
 const STORAGE_KEY = "visao-comercial:employees:v1";
@@ -16,6 +16,20 @@ export function loadEmployees(): Employee[] {
 export async function saveEmployees(employees: Employee[]) {
   if (isCloud()) await saveCloud("employees", employees);
   else localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+export async function deleteEmployee(id: string) {
+  if (isCloud()) {
+    const result = await api<{version:number}>(`employees/${encodeURIComponent(id)}`, {
+      method: "DELETE", body: JSON.stringify({version: cloud.versions.employees || 0}),
+    });
+    cloud.data.employees = cloud.data.employees.filter(employee => employee.id !== id);
+    cloud.versions.employees = result.version;
+  } else {
+    const remaining = loadEmployees().filter(employee => employee.id !== id);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining));
+  }
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
