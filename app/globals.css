@@ -825,6 +825,8 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .rank-live {display:inline-flex;align-items:center;gap:var(--space-1);color:var(--color-success);font-size:var(--font-caption);white-space:nowrap;}
 .rank-live>span {width:6px;height:6px;border-radius:50%;background:currentColor;}
 .rank-sector-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);align-items:start;}
+.rank-sector-grid:has(> :only-child) {grid-template-columns:minmax(0,1fr);}
+.rank-sector-grid:has(> :first-child:nth-last-child(2)) {grid-template-columns:repeat(2,minmax(0,1fr));}
 .rank-sector-panel {min-width:0;border:1px solid var(--color-border);border-radius:var(--radius-card);overflow:hidden;background:#fff;}
 .rank-sector-heading {display:flex;align-items:start;justify-content:space-between;gap:var(--space-2);padding:var(--space-3);background:#f5f9ff;border-bottom:1px solid var(--color-border);}
 .rank-sector-heading h3 {font-size:var(--font-h4);margin:0;color:var(--navy);}
@@ -844,5 +846,5 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .rank-pagination .button {width:44px;height:44px;min-height:44px;padding:0;display:grid;place-items:center;}
 .employee-section-nav {display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap;}
 @media(max-width:1100px){.rank-sector-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
-@media(max-width:700px){.rank-sector-grid {grid-template-columns:minmax(0,1fr);} .rank-line-panel {padding:var(--space-3);} .rank-line-title {gap:var(--space-2);} .rank-line-icon {display:none;} .rank-line-title h2 {font-size:var(--font-h4);} .rank-line-heading {align-items:start;} .rankings-toolbar {align-items:stretch;flex-direction:column;} .rankings-toolbar label {width:auto;} .rank-table th,.rank-table td {padding-inline:var(--space-1);} .rank-table th:first-child,.rank-table td:first-child {width:36px;} .rank-table th:last-child,.rank-table td:last-child {width:104px;} .rank-sector-heading {flex-wrap:wrap;} }
+@media(max-width:700px){.rank-sector-grid,.rank-sector-grid:has(> :first-child:nth-last-child(2)) {grid-template-columns:minmax(0,1fr);} .rank-line-panel {padding:var(--space-3);} .rank-line-title {gap:var(--space-2);} .rank-line-icon {display:none;} .rank-line-title h2 {font-size:var(--font-h4);} .rank-line-heading {align-items:start;} .rankings-toolbar {align-items:stretch;flex-direction:column;} .rankings-toolbar label {width:auto;} .rank-table th,.rank-table td {padding-inline:var(--space-1);} .rank-table th:first-child,.rank-table td:first-child {width:36px;} .rank-table th:last-child,.rank-table td:last-child {width:104px;} .rank-sector-heading {flex-wrap:wrap;} }
 
