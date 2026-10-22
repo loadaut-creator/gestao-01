@@ -10,7 +10,8 @@ Painel de gestão comercial para farmácia, com equipe, importação de vendas, 
 - Vendas: indicadores, gráficos, filtros por mês, setor e funcionário; devoluções consideradas no desempenho individual.
 - Metas: distribuição mensal por valor ou porcentagem, metas e resultados por setor.
 - Campanhas com ranking de planilha, busca, publicação por período e ordenação de cartões: veja [documentação](docs/campanhas.md).
-- Rankings gerais e relatórios são áreas previstas para próximas etapas.
+- Rankings exibem campanhas vigentes agrupadas por linha e setor, com busca e paginação independentes.
+- Relatórios são uma área prevista para próximas etapas.
 
 ## Dados
 

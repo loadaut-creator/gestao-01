@@ -12,6 +12,8 @@ Linhas de totalização, nomes vazios, valores vazios e negativos são ignorados
 
 ## Publicação
 
+Em **Rankings**, as campanhas vigentes são reunidas em painéis por linha, com um ranking independente para cada setor. Preencha a mesma “Linha da campanha no ranking” (por exemplo, CIMED) nas campanhas relacionadas. Sem esse campo, o sistema usa o nome sem o prefixo Campanha e sem o sufixo do setor. A ordenação segue Balcão, Perfumaria, Caixa e Todos, respeitando a ordem cadastrada entre campanhas do mesmo setor. Somente setores cadastrados são exibidos; busca e paginação mantêm as posições originais. No celular, os painéis se empilham.
+
 Funcionários consultam somente campanhas publicadas dentro do período vigente, com lista completa, busca por nome, posição e vendas. Rascunhos, campanhas futuras e encerradas ficam na administração. O link do Power BI fica restrito à administração e serve como referência; não existe sincronização automática. Para atualizar os valores, publique uma nova planilha.
 
 Alterar setor ou forma de medição sem enviar outra planilha exige confirmar a retirada do ranking anterior. A revisão do documento impede sobrescrever alterações concorrentes. Limites: 100 campanhas, 20 mil linhas por ranking e 12 MB por gravação na API.

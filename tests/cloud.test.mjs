@@ -17,7 +17,18 @@ const handler=load('functions/api/[[path]].ts').onRequest;
 const biNumbers=load('lib/bi/numbers.ts');
 const biModel=load('lib/bi/model.ts');
 const campaigns=load('lib/campaigns/model.ts');
+const campaignGroups=load('lib/campaigns/rankings.ts');
 const campaign={id:'campaign-test',name:'Teste MP',sector:'Balcão',metric:'money',startsAt:'2020-01-01',endsAt:'2099-12-31',status:'published',powerBiUrl:'https://app.powerbi.com/report/test',rules:'',prize:'',order:0,createdAt:'2026-10-22T12:00:00.000Z',updatedAt:'2026-10-22T12:00:00.000Z',ranking:{fileName:'teste.csv',importedAt:'2026-10-22T12:00:00.000Z',rows:[{seller:'Pessoa externa',value:31146}]}};
+test('rankings agrupam linhas e setores, mantendo somente campanhas vigentes',()=>{
+ const records=[{...campaign,id:'c1',name:'CAMPANHA CIMED',sector:'Balcão'}, {...campaign,id:'c2',name:'CIMED — PERFUMISTA',sector:'Perfumaria',order:1}, {...campaign,id:'c3',name:'Cimed - Caixa',sector:'Caixa',order:2}, {...campaign,id:'mp',name:'MP - BALCAO',order:3}, {...campaign,id:'draft',name:'Cimed',status:'draft'}, {...campaign,id:'closed',name:'Cimed',status:'closed'}, {...campaign,id:'future',name:'Cimed',startsAt:'2027-01-01'}, {...campaign,id:'past',name:'Cimed',endsAt:'2026-10-21'}];
+ const groups=campaignGroups.groupActiveRankings(records,'2026-10-22');
+ assert.equal(groups.length,2);assert.equal(groups[0].name,'CIMED');assert.equal(groups[0].campaigns.map(c=>c.sector).join(','),'Balcão,Perfumaria,Caixa');assert.equal(groups[1].campaigns.length,1);
+ assert.equal(groups[0].campaigns[0].ranking.rows[0].seller,'Pessoa externa');
+ assert.equal(campaignGroups.campaignLine({...campaign,name:'EMS & Culturelle'}),'EMS & Culturelle');
+ assert.equal(campaignGroups.campaignLine({...campaign,line:'Linha especial'}),'Linha especial');
+ assert.equal(campaignGroups.groupActiveRankings([{...campaign,name:'Nome A',line:'CIMED'},{...campaign,id:'b',name:'Nome B',line:'cimed'}],'2026-10-22').length,1);
+ assert.equal(campaignGroups.groupActiveRankings([]).length,0);
+});
 test('campanhas: planilha agrupada, células vazias, totais e lista sem cadastro',()=>{
  const columns=['Cargo | Vendedor | Filial','Vendedor','Venda'];
  const table={columns,rows:[['BALC. MEDICAMENTO','Total','1254641,77'],['','Renata','31146'],['','Anna','4581,56'],['','Homônimo','0'],['','Devolução','-2'],['','Sem valor',''],['PERFUMARIA','Total','90'],['','Outra pessoa','90']]};

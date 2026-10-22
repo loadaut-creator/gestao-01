@@ -1,4 +1,5 @@
 "use client";
+import { RankingsPage } from "./rankings/rankings-page";
 import { CampaignsPage } from "./campaigns/campaigns-page";
 import { CampaignHomeSummary } from "./campaigns/campaign-home-summary";
 
@@ -54,7 +55,7 @@ const details: Record<Page, { title: string; description: string; icon: typeof L
     { title: "Regras e critérios", text: "Espaço para acompanhar objetivos, participantes e prêmios.", icon: ClipboardList },
     { title: "Resultados", text: "Leitura visual do andamento das campanhas.", icon: Activity },
   ] },
-  rankings: { title: "Rankings", description: "Compare desempenhos de forma clara e objetiva.", icon: Award, cards: [
+  rankings: { title: "Rankings", description: "Acompanhe os rankings das campanhas ativas por linha e setor.", icon: Award, cards: [
     { title: "Ranking geral", text: "Classificação da equipe conforme o período selecionado.", icon: Award },
     { title: "Por cargo e setor", text: "Visões específicas para comparar grupos equivalentes.", icon: Users },
     { title: "Campanhas e Dia D", text: "Classificações ligadas às dinâmicas comerciais.", icon: Flag },
@@ -162,6 +163,6 @@ export function Dashboard({ page }: { page: Page }) { return <CloudGate><Dashboa
 
 function DashboardContent({ page }: { page: Page }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  if(cloud.session.role==="employee")return <EmployeeDashboard/>;
-  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "campanhas" ? <CampaignsPage/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
+  if(cloud.session.role==="employee")return <EmployeeDashboard page={page}/>;
+  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "rankings" ? <RankingsPage/> : page === "campanhas" ? <CampaignsPage/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
 }

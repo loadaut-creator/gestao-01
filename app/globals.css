@@ -811,3 +811,38 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .campaign-art-editor img {max-width:100%;height:auto;max-height:180px;object-fit:contain;border-radius:var(--space-2);}
 .campaign-art-editor input {max-width:100%;}
 
+/* Rankings das campanhas, agrupados por linha. */
+.rankings-page {display:grid;gap:var(--space-5);min-width:0;}
+.rankings-toolbar {display:flex;align-items:end;justify-content:space-between;gap:var(--space-3);}
+.rankings-toolbar label {width:240px;max-width:100%;}
+.rankings-toolbar>span {color:var(--color-secondary);font-size:var(--font-label);padding-bottom:var(--space-3);}
+.rank-line-panel {padding:var(--space-4);min-width:0;}
+.rank-line-heading {display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-4);}
+.rank-line-title {display:flex;align-items:center;gap:var(--space-3);min-width:0;}
+.rank-line-icon {display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:var(--space-2);background:#edf6ff;color:var(--navy);}
+.rank-line-title h2 {font-size:var(--font-h3);margin:0;overflow-wrap:anywhere;}
+.rank-line-title p {font-size:var(--font-caption);color:var(--color-secondary);margin:var(--space-1) 0 0;}
+.rank-live {display:inline-flex;align-items:center;gap:var(--space-1);color:var(--color-success);font-size:var(--font-caption);white-space:nowrap;}
+.rank-live>span {width:6px;height:6px;border-radius:50%;background:currentColor;}
+.rank-sector-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);align-items:start;}
+.rank-sector-panel {min-width:0;border:1px solid var(--color-border);border-radius:var(--radius-card);overflow:hidden;background:#fff;}
+.rank-sector-heading {display:flex;align-items:start;justify-content:space-between;gap:var(--space-2);padding:var(--space-3);background:#f5f9ff;border-bottom:1px solid var(--color-border);}
+.rank-sector-heading h3 {font-size:var(--font-h4);margin:0;color:var(--navy);}
+.rank-sector-heading p {font-size:var(--font-caption);margin:var(--space-1) 0 0;color:var(--color-secondary);overflow-wrap:anywhere;}
+.rank-sector-heading>span {font-size:var(--font-caption);color:var(--color-secondary);white-space:nowrap;}
+.rank-sector-meta {display:flex;justify-content:space-between;gap:var(--space-2);flex-wrap:wrap;font-size:var(--font-caption);color:var(--color-secondary);padding:var(--space-3) var(--space-3) 0;}
+.rank-search {margin:var(--space-3);padding:var(--space-2);min-height:44px;}
+.rank-table-scroll {max-height:360px;overflow:auto;overscroll-behavior:contain;min-width:0;}
+.rank-table th:first-child,.rank-table td:first-child {width:40px;}
+.rank-table th:last-child,.rank-table td:last-child {width:112px;}
+.rank-table th,.rank-table td {padding:var(--space-3) var(--space-2);}
+.rank-table tbody th {font-size:var(--font-label);line-height:1.5;}
+.rank-table tbody td:last-child {font-size:var(--font-label);white-space:nowrap;}
+.rank-pagination {display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);border-top:1px solid var(--color-border);padding:var(--space-2) var(--space-3);}
+.rank-pagination>span {font-size:var(--font-caption);color:var(--color-secondary);}
+.rank-pagination>div {display:flex;gap:var(--space-1);}
+.rank-pagination .button {width:44px;height:44px;min-height:44px;padding:0;display:grid;place-items:center;}
+.employee-section-nav {display:flex;gap:var(--space-2);margin-bottom:var(--space-4);flex-wrap:wrap;}
+@media(max-width:1100px){.rank-sector-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px){.rank-sector-grid {grid-template-columns:minmax(0,1fr);} .rank-line-panel {padding:var(--space-3);} .rank-line-title {gap:var(--space-2);} .rank-line-icon {display:none;} .rank-line-title h2 {font-size:var(--font-h4);} .rank-line-heading {align-items:start;} .rankings-toolbar {align-items:stretch;flex-direction:column;} .rankings-toolbar label {width:auto;} .rank-table th,.rank-table td {padding-inline:var(--space-1);} .rank-table th:first-child,.rank-table td:first-child {width:36px;} .rank-table th:last-child,.rank-table td:last-child {width:104px;} .rank-sector-heading {flex-wrap:wrap;} }
+

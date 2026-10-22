@@ -6,6 +6,7 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => !Number.isN
 export const CAMPAIGN_SECTORS = ["Todos", "Balcão", "Perfumaria", "Caixa"] as const;
 export const campaignSchema = z.object({
   id:z.string().min(1).max(100), name:z.string().trim().min(1).max(100),
+  line:z.string().trim().max(100).optional(),
   sector:z.enum(CAMPAIGN_SECTORS), metric:z.enum(["money","quantity"]),
   startsAt:date, endsAt:date, status:z.enum(["draft","published","closed"]),
   powerBiUrl:z.string().max(2000).refine(value=>!value || /^https:\/\/(app\.powerbi\.com|app\.fabric\.microsoft\.com)\//i.test(value),"Use um link HTTPS do Power BI."),
