@@ -1,8 +1,8 @@
 import { findEmployeeForSeller, type ImportRecord, type NormalizedRow } from "@/lib/bi/model";
 import { isSalesRole, type Employee } from "@/lib/team/model";
 
-export const SALES_SECTORS = ["Balcão", "Perfumaria", "Caixa", "Outros"] as const;
-export type SalesSector = (typeof SALES_SECTORS)[number];
+export const SALES_SECTORS = ["Balcão", "Perfumaria", "Caixa"] as const;
+export type SalesSector = (typeof SALES_SECTORS)[number] | "Outros";
 export type SalesEntry = {
   row: NormalizedRow;
   sale: number;
@@ -35,6 +35,10 @@ export function classifyRows(records: ImportRecord[], employees: Employee[]): Sa
     const sector: SalesSector = eligible ? employee.role === "Balconista" ? "Balcão" : employee.role === "Perfumista" ? "Perfumaria" : "Caixa" : "Outros";
     return { row, sale: row.sale, sector, employeeId: eligible ? employee.id : null, employeeName: eligible ? employee.name : null };
   }));
+}
+
+export function validSalesEntries(records: ImportRecord[], employees: Employee[]): SalesEntry[] {
+  return classifyRows(records, employees).filter(entry => entry.employeeId !== null && entry.sale > 0);
 }
 
 export function applySalesFilter(entries: SalesEntry[], filter: SalesFilter) {

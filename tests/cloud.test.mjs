@@ -16,6 +16,7 @@ function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(
 const handler=load('functions/api/[[path]].ts').onRequest;
 const biNumbers=load('lib/bi/numbers.ts');
 const biModel=load('lib/bi/model.ts');
+const salesDashboard=load('lib/sales/dashboard.ts');
 test('decimais numéricos do Excel não viram milhares na leitura em português',()=>{
  for(const [raw,expected] of [['261.243',261.243],['145.044',145.044],['2.985',2.985],['93.8949',93.8949],['1234',1234],['-2.985',-2.985],['0',0]]) {
   assert.equal(biModel.parseLocaleNumber(biNumbers.excelNumericText(raw)),expected);
@@ -153,4 +154,22 @@ test('exclusão de funcionário: permissões, concorrência, remoção no banco 
  assert.equal((await siteRequest('state','GET',undefined,cookie)).status,401);
  assert.equal((await siteRequest('auth/login','POST',{username:'9030',password:'test-staff-password'},'','198.51.100.31')).status,401);
  assert.equal((await request('employees/delete-me','DELETE',{version:version+1},admin)).status,404);
+});
+
+test('vendas do mês e gráficos usam somente vendedores válidos dos dias importados',()=>{
+ const employees=[person('seller-a','Ana','510'),{...person('seller-b','Bia','520'),role:'Perfumista'}, {...person('seller-c','Caio','530'),role:'Caixa'},person('inactive','Davi','540','inativo')];
+ const rows=[['Ana',50000],['Bia',20020.55],['Caio',7055.58],['TOTAL',77076.13],['Canal externo',20726.57],['Davi',500],['Ana',0],['Bia',-100]].map(([seller,sale],index)=>({...record.records[0],sourceRow:index+2,seller,sale}));
+ const daily={...record,id:'day21',reference:'2026-10-21',records:rows};
+ const old={...daily,id:'old21',importedAt:'2026-10-21T08:00:00.000Z',records:[{...rows[0],sale:1}]};
+ const chosen=salesDashboard.monthImports([old,daily],'2026-10');
+ assert.equal(chosen.length,1);assert.equal(chosen[0].id,'day21');
+ const entries=salesDashboard.validSalesEntries(chosen,employees);
+ assert.equal(entries.length,3);
+ assert.ok(Math.abs(salesDashboard.sumSales(entries)-77076.13)<.001);
+ const sectors=salesDashboard.SALES_SECTORS.map(sector=>salesDashboard.sumSales(salesDashboard.applySalesFilter(entries,{sector,employeeId:''})));
+ assert.ok(Math.abs(sectors.reduce((a,b)=>a+b,0)-77076.13)<.001);
+ assert.equal(sectors[2],7055.58);
+ assert.equal(salesDashboard.sumSales(salesDashboard.applySalesFilter(entries,{sector:'Todos',employeeId:'seller-a'})),50000);
+ const monthly={...daily,id:'month',periodKind:'month',reference:'2026-10'};
+ assert.equal(salesDashboard.monthImports([daily,monthly],'2026-10')[0].id,'month');
 });

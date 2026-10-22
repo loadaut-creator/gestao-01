@@ -12,6 +12,7 @@ import { TeamPage } from "@/components/team/team-page";
 import { GoalsPage } from "@/components/goals/goals-page";
 import { ImportPage } from "@/components/bi/import-page";
 import { SalesDashboard } from "@/components/sales/sales-dashboard";
+import { validSalesEntries } from "@/lib/sales/dashboard";
 import { subscribeToImports } from "@/lib/bi/repository";
 import { findEmployeeForSeller, type ImportRecord } from "@/lib/bi/model";
 import { ROLES, isSalesRole, type Employee, type Role } from "@/lib/team/model";
@@ -116,7 +117,7 @@ function HomeContent() {
     const employee = findEmployeeForSeller(row.seller, employees);
     return employee?.status === "ativo" && isSalesRole(employee.role) ? employee.role : "Não definido";
   };
-  const sellerRows = latestImport?.records.filter((row) => row.sale > 0 && roleForRow(row) !== "Não definido") ?? [];
+  const sellerRows = latestImport ? validSalesEntries([latestImport], employees).map(entry => entry.row) : [];
   const sellerTotal = sellerRows.reduce((sum, row) => sum + row.sale, 0);
   const filteredRows = sellerRows.filter((row) => roleFilter === "Todos" || roleForRow(row) === roleFilter);
   const filteredTotal = filteredRows.reduce((sum, row) => sum + row.sale, 0);

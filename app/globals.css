@@ -465,6 +465,13 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .bi-period h3, .bi-section-heading h3 { margin-bottom: var(--space-1); color: var(--color-heading); }
 .bi-period p, .bi-section-heading p { margin: 0 0 var(--space-4); }
 .bi-period-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); max-width: 300px; }
+.bi-reference-field { display: flex; align-items: center; min-width: 0; min-height: 48px; border: 1px solid #bdd2f0; border-radius: 10px; background: #f8fbff; transition: background .15s, border-color .15s; }
+.bi-reference-field:hover { border-color: var(--blue); background: #edf5ff; }
+.bi-reference-field:focus-within { border-color: var(--blue); outline: 2px solid #2495f240; outline-offset: 2px; background: #fff; }
+.bi-reference-icon { display: grid; flex: 0 0 44px; place-items: center; align-self: stretch; color: var(--navy); border-right: 1px solid #dce8f8; }
+.bi-reference-field .form-control { min-width: 0; min-height: 46px; border: 0; background: transparent; font-weight: var(--weight-medium); }
+.bi-reference-field .form-control:focus-visible { outline: none; }
+.bi-reference-field input::-webkit-calendar-picker-indicator { padding: var(--space-2); border-radius: var(--space-1); cursor: pointer; }
 .bi-detected { display: grid; gap: var(--space-3); }
 .bi-detected > strong { font-size: var(--font-body); color: var(--color-heading); }
 .bi-detected > div { display: flex; flex-wrap: wrap; gap: var(--space-2); max-height: 160px; overflow: auto; }
