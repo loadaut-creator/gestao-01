@@ -116,7 +116,9 @@ function HomeContent() {
     const employee = findEmployeeForSeller(row.seller, employees);
     return employee?.status === "ativo" && isSalesRole(employee.role) ? employee.role : "Não definido";
   };
-  const filteredRows = latestImport?.records.filter((row) => { const role = roleForRow(row); return row.sale > 0 && role !== "Não definido" && (roleFilter === "Todos" || role === roleFilter); }) ?? [];
+  const sellerRows = latestImport?.records.filter((row) => row.sale > 0 && roleForRow(row) !== "Não definido") ?? [];
+  const sellerTotal = sellerRows.reduce((sum, row) => sum + row.sale, 0);
+  const filteredRows = sellerRows.filter((row) => roleFilter === "Todos" || roleForRow(row) === roleFilter);
   const filteredTotal = filteredRows.reduce((sum, row) => sum + row.sale, 0);
   const money = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   const integer = (value: number) => new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(value);
@@ -134,7 +136,7 @@ function HomeContent() {
   };
   return <>
     {importError ? <section className="panel" role="alert"><h2>Vendas diárias</h2><p>Não foi possível carregar as importações. Tente novamente para consultar os dados salvos.</p><button type="button" className="button button-primary" onClick={()=>window.dispatchEvent(new Event("visao308:imports-changed"))}>Tentar novamente</button></section> : latestImport === undefined ? <section className="panel"><p>Carregando vendas…</p></section> : latestImport ? <>
-      <section className="panel today-total"><div><h2>Vendas até o momento</h2></div><strong>{money(latestImport.totalSale)}</strong></section>
+      <section className="panel today-total"><div><h2>Vendas até o momento</h2></div><strong>{money(sellerTotal)}</strong></section>
       <section className="panel imported-sales-panel">
         <div className="panel-heading"><div><span className="panel-kicker">VENDEDORES</span><h2>Vendas diárias</h2></div></div>
         <div className="imported-role-filters" role="group" aria-label="Filtrar vendas por cargo">{(["Todos", ...ROLES] as const).map((role) => <button type="button" key={role} className={roleFilter === role ? "active" : ""} aria-pressed={roleFilter === role} onClick={() => setRoleFilter(role)}>{role}</button>)}</div>
@@ -143,7 +145,7 @@ function HomeContent() {
       </section>
     </> : <section className="panel imported-sales-empty"><h2>Vendas diárias</h2><p>Nenhuma importação diária confirmada.</p><Link href="/importacao-bi" className="button button-primary">Importar vendas diárias</Link></section>}
     <section className="panel activity-panel home-activity"><div className="panel-heading"><div><span className="panel-kicker">EM FOCO</span><h2>Operação comercial</h2></div></div><div className="focus-items"><div className="focus-row"><div className="focus-icon"><Flag size={18}/></div><div><strong>Meta Dia D</strong><span>Área reservada para evento ativo</span></div><span className="coming">Em breve</span></div><div className="focus-row"><div className="focus-icon"><Gift size={18}/></div><div><strong>Campanhas ativas</strong><span>Acompanhamento de campanhas</span></div><Link href="/campanhas" aria-label="Ver campanhas"><ArrowRight size={18}/></Link></div><div className="focus-row"><div className="focus-icon"><Award size={18}/></div><div><strong>Ranking resumido</strong><span>Visão rápida da equipe</span></div><Link href="/rankings" aria-label="Ver rankings"><ArrowRight size={18}/></Link></div></div></section>
-    {latestImport && !importError && <p className="data-note">O total usa todas as linhas da importação diária mais recente; a tabela mostra funcionários ativos com vendas acima de zero classificados como Caixa, Balconista ou Perfumista.</p>}
+    {latestImport && !importError && <p className="data-note">O total considera as vendas acima de zero dos funcionários ativos classificados como Caixa, Balconista ou Perfumista. O filtro por cargo altera apenas o subtotal da tabela.</p>}
   </>;
 }
 
