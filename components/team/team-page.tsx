@@ -152,15 +152,15 @@ export function TeamPage() {
 
   return <div className="team-page">
     <section className="team-summary" aria-label="Resumo da equipe">
-      <div className="panel team-summary-card"><span>Total cadastrado</span><strong>{employees.length}</strong><Users size={21}/></div>
-      <div className="panel team-summary-card"><span>Funcionários ativos</span><strong>{activeCount}</strong><UserCheck size={21}/></div>
-      <div className="panel team-summary-card"><span>Sem identificador BI</span><strong>{withoutBi}</strong><Link2 size={21}/></div>
+      <div className="panel team-summary-card"><span>Cadastrados</span><strong>{employees.length}</strong><Users size={21}/></div>
+      <div className="panel team-summary-card"><span>Ativos</span><strong>{activeCount}</strong><UserCheck size={21}/></div>
+      <div className="panel team-summary-card"><span>Sem vínculo BI</span><strong>{withoutBi}</strong><Link2 size={21}/></div>
     </section>
 
     {notice && <div className={`team-notice ${notice.kind}`} role="status" aria-live="polite">{notice.kind === "success" && <CheckCircle2 size={18}/>}<span>{notice.text}</span></div>}
 
     <section className="panel team-list-panel" aria-labelledby="team-list-title">
-      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastro e vínculo com o identificador do BI. Gerencie os funcionários e seus acessos ao sistema.</p></div></div>
+      <div className="team-list-header"><div><span className="panel-kicker">PESSOAS</span><h2 id="team-list-title">Funcionários</h2><p>Cadastre, edite e gerencie o acesso da equipe.</p></div></div>
 
       {formOpen && <form className="team-form" onSubmit={submit} noValidate>
         <div className="team-form-heading"><div><h3>{editingId ? "Editar funcionário" : "Novo funcionário"}</h3><p>Preencha os dados do colaborador.</p></div><button type="button" className="icon-button" onClick={() => setFormOpen(false)} aria-label="Fechar formulário"><X size={19}/></button></div>
