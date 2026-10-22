@@ -291,12 +291,18 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .team-empty > svg { color: var(--blue); }
 .team-empty strong { color: var(--color-heading); font-size: var(--font-h4); font-weight: var(--weight-semibold); }
 .team-empty p { margin: 0; font-size: var(--font-body); }
-.team-group { min-width: 0; padding: 0; overflow: hidden; }
+.team-groups { min-width: 0; columns: 440px 2; column-gap: var(--space-4); }
+.team-group { min-width: 0; padding: 0; overflow: hidden; break-inside: avoid; margin-bottom: var(--space-4); }
 .team-group-heading { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
 .team-group-heading h3 { margin: 0; color: var(--color-heading); font-size: var(--font-h4); }
 .team-group-heading span { padding: var(--space-1) var(--space-2); border-radius: 12px; background: #eef4ff; color: #185893; font-size: var(--font-caption); font-weight: var(--weight-medium); }
-.team-table { width: 100%; min-width: 620px; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.team-table { width: 100%; min-width: 460px; table-layout: fixed; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.team-table th:first-child { overflow-wrap: anywhere; }
+.team-table th:nth-child(2) { width: 88px; }
+.team-table th:nth-child(3) { width: 104px; }
+.team-table th:nth-child(4), .team-table th:nth-child(5) { width: 60px; }
 .team-table th, .team-table td { padding: var(--space-2) var(--space-3); }
+.team-table th:nth-child(n+4), .team-table td:nth-child(n+4) { padding-inline: var(--space-2); }
 .team-table tbody th, .team-table tbody td { height: 48px; padding-block: 2px; }
 .team-table td:nth-last-child(-n+2) { white-space: nowrap; }
 .team-table thead { background: var(--color-table-head); }
