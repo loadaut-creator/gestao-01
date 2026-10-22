@@ -807,9 +807,20 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 
 .campaign-art {display:block;width:100%;padding:0;border:0;border-radius:var(--space-2);overflow:hidden;background:#f5f9ff;margin-bottom:var(--space-3);}
 .campaign-art img {display:block;width:100%;height:auto;max-height:200px;object-fit:contain;}
-.campaign-art-editor {display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;min-width:0;}
-.campaign-art-editor img {max-width:100%;height:auto;max-height:180px;object-fit:contain;border-radius:var(--space-2);}
-.campaign-art-editor input {max-width:100%;}
+.campaign-image-upload {display:grid;grid-template-columns:160px minmax(0,1fr);align-items:center;gap:var(--space-4);padding:var(--space-4);border:1px dashed #a8c9ff;border-radius:var(--radius-card);background:#f7faff;min-width:0;}
+.campaign-image-preview {display:grid;place-items:center;min-width:0;height:120px;background:#eaf3ff;border:1px solid #d3e5ff;border-radius:var(--space-2);color:var(--blue);overflow:hidden;}
+.campaign-image-preview.has-image {background:#fff;}
+.campaign-image-preview img {display:block;width:100%;height:100%;object-fit:contain;}
+.campaign-image-content {display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);min-width:0;flex-wrap:wrap;}
+.campaign-image-content>div:first-child {min-width:0;flex:1 1 200px;}
+.campaign-image-content h3 {font-size:var(--font-h4);margin:0;}
+.campaign-image-content p {font-size:var(--font-label);margin:var(--space-1) 0;color:var(--color-secondary);}
+.campaign-image-format {display:block;font-size:var(--font-caption);color:var(--color-secondary);}
+.campaign-image-selected {display:flex;align-items:center;gap:var(--space-1);font-size:var(--font-caption);color:var(--color-success);margin-top:var(--space-2);overflow-wrap:anywhere;}
+.campaign-image-selected svg {flex-shrink:0;}
+.campaign-image-actions {display:flex;gap:var(--space-2);flex-wrap:wrap;}
+.campaign-image-remove {color:#b42336;}
+@media(max-width:700px){.campaign-image-upload {grid-template-columns:minmax(0,1fr);padding:var(--space-3);} .campaign-image-preview {height:150px;} .campaign-image-content {gap:var(--space-3);} .campaign-image-actions {width:100%;} .campaign-image-actions .button {flex:1;}}
 
 /* Rankings das campanhas, agrupados por linha. */
 .rankings-page {display:grid;gap:var(--space-5);min-width:0;}

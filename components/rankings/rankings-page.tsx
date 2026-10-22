@@ -4,6 +4,7 @@ import {Award,ChevronLeft,ChevronRight,Search} from "lucide-react";
 import {campaignRanking,formatCampaignValue,normalizeSearch,type Campaign} from "@/lib/campaigns/model";
 import {groupActiveRankings} from "@/lib/campaigns/rankings";
 import {loadCampaigns,subscribeToCampaigns} from "@/lib/campaigns/repository";
+import {isCloud,refreshCloud} from "@/lib/cloud/client";
 
 function RankingPanel({campaign}:{campaign:Campaign}) {
  const [search,setSearch]=useState(""),[page,setPage]=useState(0);
@@ -26,9 +27,12 @@ function RankingPanel({campaign}:{campaign:Campaign}) {
 export function RankingsPage() {
  const [campaigns,setCampaigns]=useState<Campaign[]>([]),[error,setError]=useState(""),[loaded,setLoaded]=useState(false),[filter,setFilter]=useState("");
  useEffect(()=>{
-  const refresh=()=>{try{setCampaigns(loadCampaigns());setError("");}catch{setError("Não foi possível carregar os rankings. Atualize a página para tentar novamente.");}finally{setLoaded(true);}};
-  queueMicrotask(refresh);const unsubscribe=subscribeToCampaigns(refresh);const timer=setInterval(refresh,60000);
-  return()=>{unsubscribe();clearInterval(timer);};
+  let active=true,checking=false;
+  const refresh=()=>{if(!active)return;try{setCampaigns(loadCampaigns());setError("");}catch{setError("Não foi possível carregar os rankings. Atualize a página para tentar novamente.");}finally{setLoaded(true);}};
+  const sync=async()=>{if(!active||checking||document.hidden)return;checking=true;try{if(isCloud())await refreshCloud();refresh();}catch{if(active)setError("Não foi possível atualizar os rankings. Os últimos dados continuam exibidos.");}finally{checking=false;}};
+  queueMicrotask(()=>{refresh();void sync();});const unsubscribe=subscribeToCampaigns(refresh);const timer=setInterval(()=>void sync(),60000);
+  window.addEventListener("focus",sync);document.addEventListener("visibilitychange",sync);
+  return()=>{active=false;unsubscribe();clearInterval(timer);window.removeEventListener("focus",sync);document.removeEventListener("visibilitychange",sync);};
  },[]);
  const groups=groupActiveRankings(campaigns),filtered=groups.filter(group=>!filter||group.key===filter);
  return <div className="rankings-page">
