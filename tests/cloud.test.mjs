@@ -16,6 +16,22 @@ function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(
 const handler=load('functions/api/[[path]].ts').onRequest;
 const biNumbers=load('lib/bi/numbers.ts');
 const biModel=load('lib/bi/model.ts');
+const campaigns=load('lib/campaigns/model.ts');
+const campaign={id:'campaign-test',name:'Teste MP',sector:'Balcão',metric:'money',startsAt:'2020-01-01',endsAt:'2099-12-31',status:'published',powerBiUrl:'https://app.powerbi.com/report/test',rules:'',prize:'',order:0,createdAt:'2026-10-22T12:00:00.000Z',updatedAt:'2026-10-22T12:00:00.000Z',ranking:{fileName:'teste.csv',importedAt:'2026-10-22T12:00:00.000Z',rows:[{seller:'Pessoa externa',value:31146}]}};
+test('campanhas: planilha agrupada, células vazias, totais e lista sem cadastro',()=>{
+ const columns=['Cargo | Vendedor | Filial','Vendedor','Venda'];
+ const table={columns,rows:[['BALC. MEDICAMENTO','Total','1254641,77'],['','Renata','31146'],['','Anna','4581,56'],['','Homônimo','0'],['','Devolução','-2'],['','Sem valor',''],['PERFUMARIA','Total','90'],['','Outra pessoa','90']]};
+ const mapping=campaigns.suggestRankingMapping(columns,'money');
+ const result=campaigns.inspectCampaignRanking(table,mapping,'Balcão');
+ assert.equal(result.errors.length,0);assert.equal(result.rows.length,3);assert.equal(result.rows[0].value,31146);assert.equal(result.rows[1].value,4581.56);assert.equal(result.ignored,5);
+ assert.equal(campaigns.inspectCampaignRanking(table,mapping,'Todos').rows.length,4);
+ assert.equal(campaigns.inspectCampaignRanking(table,{seller:'Venda',value:'Venda'}).errors.length,1);
+ const ranked=campaigns.campaignRanking({...campaign,ranking:{...campaign.ranking,rows:[{seller:'Bia',value:10},{seller:'Ana',value:10},{seller:'Caio',value:5}]}});
+ assert.equal(ranked.map(row=>row.rank).join(','),'1,1,3');assert.equal(ranked[0].seller,'Ana');
+ assert.equal(campaigns.normalizeSearch('João'),'joao');
+ assert.equal(campaigns.campaignSchema.safeParse({...campaign,endsAt:'2019-01-01'}).success,false);
+ assert.equal(campaigns.campaignSchema.safeParse({...campaign,powerBiUrl:'https://other.example/'}).success,false);
+});
 const salesDashboard=load('lib/sales/dashboard.ts');
 test('decimais numéricos do Excel não viram milhares na leitura em português',()=>{
  for(const [raw,expected] of [['261.243',261.243],['145.044',145.044],['2.985',2.985],['93.8949',93.8949],['1234',1234],['-2.985',-2.985],['0',0]]) {
@@ -172,4 +188,23 @@ test('vendas do mês e gráficos usam somente vendedores válidos dos dias impor
  assert.equal(salesDashboard.sumSales(salesDashboard.applySalesFilter(entries,{sector:'Todos',employeeId:'seller-a'})),50000);
  const monthly={...daily,id:'month',periodKind:'month',reference:'2026-10'};
  assert.equal(salesDashboard.monthImports([daily,monthly],'2026-10')[0].id,'month');
+});
+
+test('campanhas persistem com revisão e funcionário só consulta publicadas vigentes',async()=>{
+ const data=[campaign,{...campaign,id:'draft',status:'draft'},{...campaign,id:'closed',status:'closed'},{...campaign,id:'future',startsAt:'2099-01-01'}];
+ assert.equal((await request('campaigns','PUT',{version:0,data},admin)).status,200);
+ assert.equal((await request('campaigns','PUT',{version:0,data:[]},admin)).status,409);
+ const state=await(await request('state','GET',undefined,admin)).json();assert.equal(state.data.campaigns.length,4);assert.equal(state.versions.campaigns,1);
+ assert.equal((await request('campaigns','PUT',{version:1,data:[]},await token('viewer@example.com'))).status,403);
+ addPerson(person('campaign-employee','Teste Ranking','9088'));
+ const login=await siteRequest('auth/login','POST',{username:'9088',password:'test-staff-password'},'','198.51.100.88');
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const staff=await(await siteRequest('state','GET',undefined,cookie)).json();
+ assert.equal(staff.data.campaigns.length,1);assert.equal(staff.versions.campaigns,1);assert.equal(staff.data.campaigns[0].powerBiUrl,'');assert.equal(staff.data.campaigns[0].ranking.rows[0].seller,'Pessoa externa');
+ assert.equal((await siteRequest('campaigns','PUT',{version:1,data:[]},cookie)).status,403);
+ const backup={schemaVersion:1,employees:[],goals:[],templates:[],imports:[],campaigns:data};
+ assert.equal(migration.backupSchema.parse(backup).campaigns.length,4);
+ const old={...backup};delete old.campaigns;assert.equal(migration.backupSchema.parse(old).campaigns.length,0);
+ assert.equal(migration.mergeMigration(backup,{...backup,campaigns:[]}).campaigns.length,4);
+ assert.equal((await request('validate-migration','POST',backup,admin)).status,200);
 });

@@ -9,7 +9,8 @@ Painel de gestão comercial para farmácia, com equipe, importação de vendas, 
 - Início: vendas diárias de funcionários ativos com valor de venda positivo.
 - Vendas: indicadores, gráficos, filtros por mês, setor e funcionário; devoluções consideradas no desempenho individual.
 - Metas: distribuição mensal por valor ou porcentagem, metas e resultados por setor.
-- Campanhas, rankings, relatórios e configurações ainda são áreas previstas para próximas etapas.
+- Campanhas com ranking de planilha, busca, publicação por período e ordenação de cartões: veja [documentação](docs/campanhas.md).
+- Rankings gerais e relatórios são áreas previstas para próximas etapas.
 
 ## Dados
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { validGoal } from "../goals/model";
+import { campaignSchema } from "../campaigns/model";
 
 const text = z.string().max(500);
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value);
@@ -18,11 +19,11 @@ export const importSchema = z.object({id:text.min(1), importedAt:z.string().date
 });
 export const userSchema = z.object({email:z.string().email().transform(s=>s.toLowerCase()),role:z.enum(["admin","manager","viewer"]),active:z.boolean()});
 export const templateSchema = z.object({id:text.min(1),name:text.min(1),columns:z.array(text).max(100),mapping,savedAt:z.string().datetime()});
-export const resources = ["employees","goals","templates","users"] as const;
+export const resources = ["employees","goals","templates","users","campaigns"] as const;
 export type Resource = typeof resources[number];
 export function parseDocuments(resource:Resource, value:unknown) {
-  const schema = {employees:employeeSchema,goals:goalSchema,templates:templateSchema,users:userSchema}[resource];
-  const data = z.array(schema).max(5000).parse(value);
+  const schema = {employees:employeeSchema,goals:goalSchema,templates:templateSchema,users:userSchema,campaigns:campaignSchema}[resource];
+  const data = z.array(schema).max(resource==="campaigns"?100:5000).parse(value);
   const key = (item:typeof data[number]) => "email" in item ? item.email : "id" in item ? item.id : `${item.month}:${item.sector}:${item.metric}`;
   if(new Set(data.map(key)).size !== data.length) throw new Error("Há registros repetidos.");
   if(resource === "employees") {

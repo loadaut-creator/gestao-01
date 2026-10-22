@@ -1,4 +1,7 @@
 "use client";
+import { CampaignsPage } from "./campaigns/campaigns-page";
+import { CampaignHomeSummary } from "./campaigns/campaign-home-summary";
+
 
 import Link from "next/link";
 import { CloudGate } from "./cloud/cloud-gate";
@@ -145,7 +148,7 @@ function HomeContent() {
         <div className="imported-sales-total"><span>{roleFilter === "Todos" ? "Total dos vendedores" : `Total — ${roleFilter}`}</span><strong>{money(filteredTotal)}</strong></div>
       </section>
     </> : <section className="panel imported-sales-empty"><h2>Vendas diárias</h2><p>Nenhuma importação diária confirmada.</p><Link href="/importacao-bi" className="button button-primary">Importar vendas diárias</Link></section>}
-    <section className="panel activity-panel home-activity"><div className="panel-heading"><div><span className="panel-kicker">EM FOCO</span><h2>Operação comercial</h2></div></div><div className="focus-items"><div className="focus-row"><div className="focus-icon"><Flag size={18}/></div><div><strong>Meta Dia D</strong><span>Área reservada para evento ativo</span></div><span className="coming">Em breve</span></div><div className="focus-row"><div className="focus-icon"><Gift size={18}/></div><div><strong>Campanhas ativas</strong><span>Acompanhamento de campanhas</span></div><Link href="/campanhas" aria-label="Ver campanhas"><ArrowRight size={18}/></Link></div><div className="focus-row"><div className="focus-icon"><Award size={18}/></div><div><strong>Ranking resumido</strong><span>Visão rápida da equipe</span></div><Link href="/rankings" aria-label="Ver rankings"><ArrowRight size={18}/></Link></div></div></section>
+    <section className="panel activity-panel home-activity"><div className="panel-heading"><div><span className="panel-kicker">EM FOCO</span><h2>Operação comercial</h2></div></div><div className="focus-items"><div className="focus-row"><div className="focus-icon"><Flag size={18}/></div><div><strong>Meta Dia D</strong><span>Área reservada para evento ativo</span></div><span className="coming">Em breve</span></div><div className="focus-row"><div className="focus-icon"><Gift size={18}/></div><div><strong>Campanhas ativas</strong><CampaignHomeSummary/></div><Link href="/campanhas" aria-label="Ver campanhas"><ArrowRight size={18}/></Link></div><div className="focus-row"><div className="focus-icon"><Award size={18}/></div><div><strong>Ranking resumido</strong><span>Visão rápida da equipe</span></div><Link href="/rankings" aria-label="Ver rankings"><ArrowRight size={18}/></Link></div></div></section>
     {latestImport && !importError && <p className="data-note">O total considera as vendas acima de zero dos funcionários ativos classificados como Caixa, Balconista ou Perfumista. O filtro por cargo altera apenas o subtotal da tabela.</p>}
   </>;
 }
@@ -160,5 +163,5 @@ export function Dashboard({ page }: { page: Page }) { return <CloudGate><Dashboa
 function DashboardContent({ page }: { page: Page }) {
   const [menuOpen, setMenuOpen] = useState(false);
   if(cloud.session.role==="employee")return <EmployeeDashboard/>;
-  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
+  return <div className="app-shell"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><button className="mobile-close icon-button" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={22}/></button><Sidebar page={page} close={() => setMenuOpen(false)}/></aside>{menuOpen && <button className="menu-overlay" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"/>}<div className="workspace"><Header openMenu={() => setMenuOpen(true)}/><main className="content"><Intro page={page}/>{page === "inicio" ? <HomeContent/> : page === "vendas" ? <SalesDashboard/> : page === "campanhas" ? <CampaignsPage/> : page === "metas" ? <GoalsPage/> : page === "equipe" ? <TeamPage/> : page === "importacao-bi" ? <ImportPage/> : page === "configuracoes" ? <CloudSettings/> : <SectionContent page={page}/>}</main></div></div>;
 }
