@@ -9,7 +9,7 @@ export function ProfileMenu() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const employee = cloud.session.role === "employee";
-  const name = employee ? cloud.session.name || "Colaborador" : "Gerente da loja";
+  const name = cloud.session.name?.trim().split(/\s+/)[0] || (employee ? "Colaborador" : "Administrador");
   const role = employee ? cloud.session.jobTitle || "Colaborador" : cloud.session.role === "viewer" ? "Consulta" : cloud.session.role === "manager" ? "Gerente" : "Administrador";
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export function ProfileMenu() {
     };
   }, []);
 
-  const identity = <><span className="avatar">{name.charAt(0).toUpperCase()}</span><span className="profile-text"><strong>{name}</strong><span>{role}</span></span></>;
+  const identity = <><span className="avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span><span className="profile-text"><strong>{role}</strong><span>{name}</span></span></>;
   if (!isCloud()) return <div className="profile">{identity}</div>;
 
   async function logout() {
@@ -50,7 +50,7 @@ export function ProfileMenu() {
   return <details className="profile-menu" ref={menu}>
     <summary className="profile" aria-label={`Abrir opções de ${name}`}>{identity}<ChevronDown size={16} aria-hidden="true"/></summary>
     <div className="profile-dropdown">
-      <div className="profile-account"><strong>{cloud.session.name || name}</strong><span>{cloud.session.username || cloud.session.email}</span><span>{role}</span></div>
+      {employee && <div className="profile-account"><strong>{name}</strong><span>{role}</span></div>}
       <button type="button" className="profile-logout" disabled={busy} onClick={logout}><LogOut size={18} aria-hidden="true"/>{busy ? "Saindo…" : "Sair da sessão"}</button>
       {error && <p className="profile-error" role="alert">{error}</p>}
     </div>
