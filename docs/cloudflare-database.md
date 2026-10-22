@@ -23,7 +23,7 @@ Em **Workers & Pages → gestao-01 → Settings → Bindings → Add → D1 data
 - Produção: `gestao-001-prod`.
 - Preview: `gestao-001-test`.
 
-Não use `.openai/hosting.json` nem o binding do ambiente Vinext local para configurar o Pages publicado. A API desta versão está em `functions/api/[[path]].ts`, detectada pelo Pages na raiz do repositório. Mantenha o build `npm run build:hostinger` e saída `out`.
+Não use `.openai/hosting.json` nem o binding do ambiente Vinext local para configurar o Pages publicado. A API desta versão está em `functions/api/[[path]].ts`, empacotada automaticamente em `out/_worker.js` pelo script de build (modo avançado do Pages). Mantenha o build `npm run build:hostinger` e saída `out`.
 
 ## 4. Configure o login
 
