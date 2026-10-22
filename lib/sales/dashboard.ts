@@ -28,7 +28,7 @@ export function monthImports(imports: ImportRecord[], month: string) {
   return period ? [period] : latestDailyImports(imports, month);
 }
 
-export function classifyRows(records: ImportRecord[], employees: Employee[]): SalesEntry[] {
+export function classifyRows(records: Pick<ImportRecord, "records">[], employees: Employee[]): SalesEntry[] {
   return records.flatMap((record) => record.records.map((row) => {
     const employee = findEmployeeForSeller(row.seller, employees);
     const eligible = employee?.status === "ativo" && isSalesRole(employee.role);
@@ -37,7 +37,7 @@ export function classifyRows(records: ImportRecord[], employees: Employee[]): Sa
   }));
 }
 
-export function validSalesEntries(records: ImportRecord[], employees: Employee[]): SalesEntry[] {
+export function validSalesEntries(records: Pick<ImportRecord, "records">[], employees: Employee[]): SalesEntry[] {
   return classifyRows(records, employees).filter(entry => entry.employeeId !== null && entry.sale > 0);
 }
 
