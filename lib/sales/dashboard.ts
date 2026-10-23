@@ -1,4 +1,4 @@
-import { findEmployeeForSeller, type ImportRecord, type NormalizedRow } from "@/lib/bi/model";
+import { importBounds, findEmployeeForSeller, type ImportRecord, type NormalizedRow } from "@/lib/bi/model";
 import { isSalesRole, type Employee } from "@/lib/team/model";
 
 export const SALES_SECTORS = ["Balcão", "Perfumaria", "Caixa"] as const;
@@ -25,7 +25,18 @@ export function latestDailyImports(imports: ImportRecord[], month?: string) {
 export function monthImports(imports: ImportRecord[], month: string) {
   const period = imports.filter((item) => item.periodKind === "month" && item.reference === month)
     .sort((a, b) => b.importedAt.localeCompare(a.importedAt))[0];
-  return period ? [period] : latestDailyImports(imports, month);
+  if (period) return [period];
+  const selected: ImportRecord[] = [];
+  const ranges = imports.filter(item => item.periodKind === "range" && monthOf(item) === month)
+    .sort((a,b) => b.importedAt.localeCompare(a.importedAt) || b.id.localeCompare(a.id));
+  // Totais de intervalo não permitem estimar a venda de uma parte dele.
+  for (const item of ranges) {
+    const [start,end] = importBounds(item);
+    if (!selected.some(other => { const [from,to] = importBounds(other); return start <= to && end >= from; })) selected.push(item);
+  }
+  return [...selected, ...latestDailyImports(imports,month).filter(item => !selected.some(range => {
+    const [start,end] = importBounds(range); return item.reference >= start && item.reference <= end;
+  }))].sort((a,b) => a.reference.localeCompare(b.reference));
 }
 
 export function classifyRows(records: Pick<ImportRecord, "records">[], employees: Employee[]): SalesEntry[] {

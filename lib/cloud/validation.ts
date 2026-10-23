@@ -1,3 +1,4 @@
+import { settingsErrors } from "../bi/model";
 import { z } from "zod";
 import { validGoal } from "../goals/model";
 import { campaignSchema } from "../campaigns/model";
@@ -14,8 +15,8 @@ export const goalSchema = z.object({month:z.string(),sector:z.enum(["Balcão","P
 const optionalNumber = z.number().finite().nullable();
 const rowSchema = z.object({sourceRow:z.number().int().min(2),seller:text.min(1),sale:z.number().finite(),saleWasBlank:z.boolean(),clients:z.number().int().nonnegative().nullable(),ticket:optionalNumber,genSim:optionalNumber,mp:optionalNumber,date:z.string().nullable(),sector:text.nullable(),clientPremium:optionalNumber,raw:z.record(z.string(),z.string().max(10000))});
 const mapping = z.object({seller:text,sale:text,clients:text,ticket:text,genSim:text,mp:text,date:text,sector:text,clientPremium:text});
-export const importSchema = z.object({id:text.min(1), importedAt:z.string().datetime(),fileName:text.min(1),fileType:z.enum(["csv","xlsx"]),sheetName:text.optional(),periodKind:z.enum(["day","month"]),reference:z.string(),rowCount:z.number().int().min(1).max(2000),totalSale:z.number().finite(),mapping,displayColumns:z.array(text).max(100),columns:z.array(text).max(100),records:z.array(rowSchema).min(1).max(2000)}).superRefine((value,ctx)=>{
-  const referenceValid = value.periodKind === "month" ? /^\d{4}-(0[1-9]|1[0-2])$/.test(value.reference) : date.safeParse(value.reference).success;
+export const importSchema = z.object({id:text.min(1), importedAt:z.string().datetime(),fileName:text.min(1),fileType:z.enum(["csv","xlsx"]),sheetName:text.optional(),periodKind:z.enum(["day","month","range"]),reference:z.string(),endDate:date.optional(),rowCount:z.number().int().min(1).max(2000),totalSale:z.number().finite(),mapping,displayColumns:z.array(text).max(100),columns:z.array(text).max(100),records:z.array(rowSchema).min(1).max(2000)}).superRefine((value,ctx)=>{
+  const referenceValid = settingsErrors(value).length === 0;
   if(!referenceValid || value.rowCount !== value.records.length || Math.abs(value.totalSale-value.records.reduce((sum,row)=>sum+row.sale,0))>0.02 || new Set(value.records.map(row=>row.sourceRow)).size!==value.records.length) ctx.addIssue({code:"custom",message:"Período, linhas ou total da importação inválidos."});
 });
 export const userSchema = z.object({email:z.string().email().transform(s=>s.toLowerCase()),role:z.enum(["admin","manager","viewer"]),active:z.boolean()});

@@ -6,7 +6,7 @@ import { loadGoals, subscribeToGoals } from "@/lib/goals/repository";
 import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { subscribeToImports } from "@/lib/bi/repository";
-import type { ImportRecord } from "@/lib/bi/model";
+import { importPeriodLabel, type ImportRecord } from "@/lib/bi/model";
 import { loadEmployees, subscribeToEmployeeChanges } from "@/lib/team/repository";
 import type { Employee } from "@/lib/team/model";
 import { SALES_SECTORS, applySalesFilter, rankEmployees, validSalesEntries, latestDailyImports, monthImports, monthKeys, monthProjection, sumSales, type SalesFilter } from "@/lib/sales/dashboard";
@@ -50,7 +50,9 @@ export function SalesDashboard() {
   const today = todayLocal();
   const daily = useMemo(() => latestDailyImports(imports ?? [], selectedMonth), [imports, selectedMonth]);
   const monthRecords = useMemo(() => monthImports(imports ?? [], selectedMonth), [imports, selectedMonth]);
-  const monthSnapshot = monthRecords.some((item) => item.periodKind === "month");
+  const monthSnapshot = monthRecords.some((item) => item.periodKind !== "day");
+  const periodNote = monthRecords.map(importPeriodLabel).join(" · ");
+  const overlappingPeriods = (imports ?? []).filter(item=>item.periodKind==="range" && item.reference.startsWith(selectedMonth) && !monthRecords.some(selected=>selected.id===item.id)).length;
   const monthEntries = useMemo(() => validSalesEntries(monthRecords, employees), [monthRecords, employees]);
   const filter = useMemo(() => requestedFilter.employeeId && !monthEntries.some((entry) => entry.employeeId === requestedFilter.employeeId && (requestedFilter.sector === "Todos" || entry.sector === requestedFilter.sector)) ? { ...requestedFilter, employeeId: "" } : requestedFilter, [requestedFilter, monthEntries]);
   const entries = useMemo(() => applySalesFilter(monthEntries, filter), [monthEntries, filter]);
@@ -68,7 +70,7 @@ export function SalesDashboard() {
   const latestDailyDate = daily.at(-1)?.reference ?? "";
   const hasProjectionCoverage = selectedMonth === today.slice(0, 7) && daily.length >= Math.max(5, Math.ceil(elapsedDays * 0.7)) &&
     latestDailyDate >= `${selectedMonth}-${String(Math.max(1, elapsedDays - 2)).padStart(2, "0")}`;
-  const projection = hasProjectionCoverage ? monthProjection(total, selectedMonth, today) : null;
+  const projection = hasProjectionCoverage && !monthSnapshot ? monthProjection(total, selectedMonth, today) : null;
 
   const employeeChoices = useMemo(() => {
     const ids = new Set(monthEntries.filter((entry) => filter.sector === "Todos" || entry.sector === filter.sector).map((entry) => entry.employeeId));
@@ -89,7 +91,7 @@ export function SalesDashboard() {
 
   return <div className="sales-dashboard">
     <section className="panel sales-filter-panel" aria-label="Filtros de vendas">
-      <div className="sales-filter-title"><strong>Painel de vendas</strong><span>{monthSnapshot ? "Total mensal: importação do período" : "Total mensal: soma dos dias importados"}</span></div>
+      <div className="sales-filter-title"><strong>Painel de vendas</strong><span>{monthSnapshot ? "Total mensal: períodos sem somar dias já incluídos" : "Total mensal: soma dos dias importados"}</span></div>
       <div className="sales-filters">
         <label className="form-field"><span>Mês</span><select className="form-control" value={selectedMonth} onChange={(event) => { setMonth(event.target.value); setFilter((current) => ({ ...current, employeeId: "" })); }}>{months.map((key) => <option key={key} value={key}>{monthLabel(key)}</option>)}</select></label>
         <label className="form-field"><span>Setor</span><select className="form-control" value={filter.sector} onChange={(event) => setFilter({ sector: event.target.value as SalesFilter["sector"], employeeId: "" })}><option value="Todos">Todos os setores</option>{SALES_SECTORS.map((sector) => <option key={sector} value={sector}>{sector}</option>)}</select></label>
@@ -97,9 +99,10 @@ export function SalesDashboard() {
       </div>
     </section>
 
+    {overlappingPeriods > 0 && <p className="bi-preview-note" role="status">{overlappingPeriods} importação(ões) de período sobreposta(s) não entram na soma. O registro mensal tem prioridade; entre intervalos, vale o mais recente. Para somar todos os dias, envie intervalos sem sobreposição ou uma planilha com o período completo.</p>}
     <div className="sales-metrics">
       <Metric label="Vendas de hoje" value={todaySale === null ? "—" : money(todaySale)} note={selectedMonth !== today.slice(0, 7) ? "Fora do mês selecionado" : todaySale === null ? "Sem importação de hoje" : today.split("-").reverse().join("/")}/>
-      <Metric label="Vendas do mês" value={money(total)} note={monthSnapshot ? monthLabel(selectedMonth) : `${daily.length} ${daily.length === 1 ? "dia importado" : "dias importados"} · ${monthLabel(selectedMonth)}`}/>
+      <Metric label="Vendas do mês" value={money(total)} note={monthSnapshot ? periodNote : `${daily.length} ${daily.length === 1 ? "dia importado" : "dias importados"} · ${monthLabel(selectedMonth)}`}/>
       <Metric label="Meta mensal de vendas" value={target === null ? "—" : money(target)} note={targetNote}/>
       <Metric label="Atingimento" value={target === null || progress.attainment === null ? "—" : percent(progress.attainment)} note={targetNote}/>
       <Metric label="Valor faltante" value={target === null || progress.remaining === null ? "—" : money(progress.remaining)} note={targetNote}/>
@@ -118,6 +121,6 @@ export function SalesDashboard() {
     <div className="sales-lower-grid">
       <section className="panel sales-list-card"><div className="sales-card-heading"><h2>Desempenho individual</h2><p>Os 8 funcionários ativos com maior valor de vendas.</p></div>{ranking.length ? <div className="sales-chart sales-individual-chart" style={{ height: Math.max(150, Math.min(ranking.length, 8) * 36 + 36) }}><ResponsiveContainer width="100%" height="100%"><BarChart data={ranking.slice(0, 8)} layout="vertical" margin={{ top: 2, right: 20, bottom: 2, left: 4 }}><CartesianGrid stroke="#e5ecf5" horizontal={false}/><XAxis type="number" tickFormatter={compact} tickLine={false} axisLine={false}/><YAxis type="category" dataKey="name" width={130} tickLine={false} axisLine={false} tick={{ fontSize: 11 }} tickFormatter={(name: string) => { const parts = name.split(" "); return `${parts[0]} ${parts.at(-1)}`; }}/><Tooltip formatter={(value) => money(Number(value))}/><Bar dataKey="value" name="Vendas" fill="#248ff0" radius={[0, 5, 5, 0]}/></BarChart></ResponsiveContainer></div> : <p className="sales-chart-empty">Nenhum funcionário com venda neste filtro.</p>}</section>
     </div>
-    <p className="data-note">Totais consideram funcionários ativos de Balcão, Perfumaria e Caixa com vendas acima de zero. Importações mensais substituem a soma diária no total do mês para evitar duplicação.</p>
+    <p className="data-note">Totais consideram funcionários ativos de Balcão, Perfumaria e Caixa com vendas acima de zero. Importações mensais têm prioridade. Intervalos usam o registro mais recente sem sobreposição e substituem os dias que já incluem. Valores de intervalos não são distribuídos por dia.</p>
   </div>;
 }

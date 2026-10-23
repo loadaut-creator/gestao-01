@@ -7,7 +7,7 @@ import { ProfileMenu } from "./profile-menu";
 import { useEffect, useState } from "react";
 import { cloud } from "@/lib/cloud/client";
 import { subscribeToImports } from "@/lib/bi/repository";
-import type { ImportRecord } from "@/lib/bi/model";
+import { importPeriodLabel, type ImportRecord } from "@/lib/bi/model";
 
 const money=(value:number)=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 
@@ -32,7 +32,7 @@ export function EmployeeDashboard({page="inicio"}:{page?:string}) {
    </nav>
    {campaignView?<CampaignsPage employeeMode/>:<><section className="panel">
     <div className="goals-toolbar"><div><h2>Minhas vendas</h2><p>Somente os seus resultados nos períodos importados.</p></div>
-     {!!imports?.length&&<label className="form-field"><span>Período importado</span><select className="form-control" value={record?.id||""} onChange={event=>setSelected(event.target.value)}>{imports.map(item=><option value={item.id} key={item.id}>{item.periodKind==="day"?"Dia":"Mês"} · {item.reference.split("-").reverse().join("/")}</option>)}</select></label>}
+     {!!imports?.length&&<label className="form-field"><span>Período importado</span><select className="form-control" value={record?.id||""} onChange={event=>setSelected(event.target.value)}>{imports.map(item=><option value={item.id} key={item.id}>{item.periodKind==="day"?"Dia":"Período"} · {importPeriodLabel(item)}</option>)}</select></label>}
     </div>
     {error?<p role="alert">{error}</p>:imports===null?<p role="status">Carregando suas vendas…</p>:!record?<p>Nenhuma venda vinculada à sua matrícula nos arquivos importados.</p>:<>
      <div className="employee-total"><span>Total do período selecionado</span><strong>{money(record.totalSale)}</strong></div>

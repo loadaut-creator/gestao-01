@@ -94,7 +94,7 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     }
     if(path==="imports" && request.method==="POST") {
       const record=importSchema.parse(await readJson(request));
-      const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify({kind:record.periodKind,reference:record.reference,columns:record.columns,records:record.records}))))).map(byte=>byte.toString(16).padStart(2,"0")).join("");
+      const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify({kind:record.periodKind,reference:record.reference,...(record.endDate?{endDate:record.endDate}:{}),columns:record.columns,records:record.records}))))).map(byte=>byte.toString(16).padStart(2,"0")).join("");
       const previous=await q("SELECT id,fingerprint FROM imports WHERE store_id=? AND (id=? OR fingerprint=?)",store,record.id,fingerprint).first<{id:string;fingerprint:string}>();
       if(previous) return previous.fingerprint===fingerprint ? json({id:previous.id,duplicate:true}) : json({error:"Já existe uma importação diferente com este identificador."},409);
       const {records,...metadata}=record;

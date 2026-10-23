@@ -887,6 +887,22 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .goal-calendar-header {margin:-12px -12px 12px;padding:var(--space-4);border-radius:var(--radius-card) var(--radius-card) 0 0;background:var(--navy);color:#fff;}
 .goal-calendar-header>span {display:block;font-size:var(--font-caption);opacity:.85;margin-bottom:var(--space-2);}
 .goal-calendar-header strong {font-size:var(--font-h4);font-weight:600;}
+.bi-range-trigger {justify-content:flex-start;gap:var(--space-3);height:auto;min-height:44px;white-space:normal;text-align:left;}
+.bi-range-trigger svg {flex-shrink:0;color:var(--navy);}
+.bi-calendar-overlay {position:fixed;inset:0;background:#102b5766;z-index:80;}
+.bi-range-popover {position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:81;width:304px !important;padding:12px !important;max-height:calc(100dvh - 24px);overflow-y:auto;}
+.bi-range-header {margin:-12px -12px 0;padding:var(--space-3) var(--space-4) var(--space-4);background:var(--navy);color:#fff;border-radius:var(--radius-control) var(--radius-control) 0 0;}
+.bi-range-header-actions {display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-2);}
+.bi-range-header button {min-height:40px;border:0;background:transparent;color:#fff;font-weight:600;padding:var(--space-2);border-radius:var(--radius-control);}
+.bi-range-header button:disabled {opacity:.45;}
+.bi-range-header button:focus-visible {outline:2px solid #fff;outline-offset:2px;}
+.bi-range-header .bi-calendar-title {display:block;font-size:var(--font-caption);font-weight:500;letter-spacing:.08em;margin:0 0 var(--space-2);color:#fff;}
+.bi-range-header>strong {font-size:var(--font-h3);font-weight:500;}
+.bi-range-hint {font-size:var(--font-caption);padding:var(--space-3) 0;color:var(--color-muted);margin:0;}
+.bi-range-popover .rdp-root {--rdp-range_middle-background-color:#e6efff;--rdp-range_middle-color:var(--navy);--rdp-range_start-date-background-color:var(--navy);--rdp-range_end-date-background-color:var(--navy);--rdp-day-width:40px;--rdp-day-height:40px;--rdp-day_button-width:40px;--rdp-day_button-height:40px;}
+.bi-range-popover .rdp-range_middle .rdp-day_button {background:transparent;color:var(--navy);border-color:transparent;border-radius:0;font-weight:400;}
+.bi-range-footer {display:flex;justify-content:space-between;align-items:center;gap:var(--space-2);border-top:1px solid var(--color-border);margin-top:var(--space-3);padding-top:var(--space-2);font-size:var(--font-caption);color:var(--color-muted);}
+.bi-range-footer button {background:transparent;border:0;color:var(--navy);min-height:40px;font-weight:600;}
 .goal-date-popover .rdp-root {--rdp-day-width:40px;--rdp-day-height:40px;--rdp-day_button-width:40px;--rdp-day_button-height:40px;--rdp-day_button-border-radius:50%;font-family:inherit;}
 .goal-date-popover .rdp-weekday {font-size:var(--font-caption);color:var(--color-secondary);}
 .goal-date-popover .rdp-day_button {border-radius:50%;font-size:var(--font-label);}

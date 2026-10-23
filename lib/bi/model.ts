@@ -15,8 +15,8 @@ export const FIELDS = [
 
 export type Field = (typeof FIELDS)[number]["key"];
 export type Mapping = Record<Field, string>;
-export type PeriodKind = "day" | "month";
-export type ImportSettings = { periodKind: PeriodKind; reference: string };
+export type PeriodKind = "day" | "month" | "range";
+export type ImportSettings = { periodKind: PeriodKind; reference: string; endDate?: string };
 export type NormalizedRow = {
   sourceRow: number;
   seller: string;
@@ -40,6 +40,7 @@ export type ImportRecord = {
   sheetName?: string;
   periodKind: PeriodKind;
   reference: string;
+  endDate?: string;
   rowCount: number;
   totalSale: number;
   mapping: Mapping;
@@ -120,7 +121,26 @@ function validIso(value: string) {
 
 export function settingsErrors(settings: ImportSettings) {
   if (settings.periodKind === "day") return validIso(settings.reference) ? [] : ["Informe uma data de referência válida."];
+  if (settings.periodKind === "range") {
+    if (!validIso(settings.reference) || !settings.endDate || !validIso(settings.endDate)) return ["Selecione a data inicial e a data final do período."];
+    if (settings.endDate < settings.reference) return ["A data final deve ser igual ou posterior à inicial."];
+    if (settings.reference.slice(0, 7) !== settings.endDate.slice(0, 7)) return ["Selecione um intervalo dentro do mesmo mês. Para meses diferentes, importe uma planilha por mês."];
+    return [];
+  }
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(settings.reference) ? [] : ["Informe um mês de referência válido."];
+}
+
+export function importPeriodLabel(settings: ImportSettings) {
+  const br = (value: string) => value.split("-").reverse().join("/");
+  return settings.periodKind === "range" ? `${br(settings.reference)} a ${br(settings.endDate ?? "")}` : br(settings.reference);
+}
+
+export function importBounds(record: ImportSettings): [string, string] {
+  if (record.periodKind === "month") {
+    const [year, month] = record.reference.split("-").map(Number);
+    return [`${record.reference}-01`, `${record.reference}-${new Date(year, month, 0).getDate()}`];
+  }
+  return [record.reference, record.periodKind === "range" ? record.endDate ?? record.reference : record.reference];
 }
 
 export function validateRows(table: ParsedTable, mapping: Mapping, excluded: Set<number>, linkedIds: Set<string>): RowCheck[] {
@@ -194,7 +214,7 @@ function samePersonName(seller: string[], employee: string[]) {
 export function findEmployeeForSeller(seller: string, employees: Employee[]): Employee | null {
   const key = normalizeIdentifier(seller);
   if (!key) return null;
-  const exact = employees.filter((employee) => [employee.biIdentifier, employee.name].some((value) => value && normalizeIdentifier(value) === key));
+  const exact = employees.filter((employee) => [employee.biIdentifier, employee.registration, employee.name].some((value) => value && normalizeIdentifier(value) === key));
   if (exact.length) return exact.length === 1 ? exact[0] : null;
   const parts = nameTokens(seller);
   const candidates = employees.filter((employee) => [employee.biIdentifier, employee.name].some((value) => value && samePersonName(parts, nameTokens(value))));

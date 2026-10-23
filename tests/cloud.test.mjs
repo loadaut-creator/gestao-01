@@ -274,3 +274,44 @@ test('meta automática divide a meta do setor pelos dias e colaboradores ativos'
  assert.throws(()=>dailyGoalsModel.withGoalDays(goals,'2026-10',0));
  const scope=dailyGoalsModel.employeeDailyGoalBases(goals,employees,employees[0]);assert.equal(scope.length,1);assert.equal(scope[0].sector,'Balcão');assert.equal('employees' in scope[0],false);
 });
+
+test('intervalos: datas completas, ordem e mês, preservando registros antigos',()=>{
+ const period={periodKind:'range',reference:'2026-10-05',endDate:'2026-10-15'};
+ assert.equal(biModel.settingsErrors(period).length,0);
+ for(const invalid of [{...period,endDate:undefined},{...period,endDate:'2026-10-04'},{...period,endDate:'2026-11-01'},{...period,reference:'2026-02-30'}])assert.ok(biModel.settingsErrors(invalid).length);
+ assert.equal(biModel.settingsErrors({periodKind:'month',reference:'2026-10'}).length,0);
+ assert.equal(biModel.importPeriodLabel(period),'05/10/2026 a 15/10/2026');
+ assert.equal(biModel.importBounds({periodKind:'month',reference:'2024-02'}).join(','),'2024-02-01,2024-02-29');
+});
+
+test('intervalos na API: persistência, deduplicação por início e fim e rejeição de datas inválidas',async()=>{
+ const period={...record,id:'range-1',periodKind:'range',reference:'2026-10-01',endDate:'2026-10-10'};
+ assert.equal((await request('imports','POST',period,admin)).status,201);
+ assert.equal((await(await request('imports','POST',{...period,id:'range-duplicate'},admin)).json()).duplicate,true);
+ assert.equal((await request('imports','POST',{...period,id:'range-2',endDate:'2026-10-15'},admin)).status,201);
+ for(const endDate of [undefined,'2026-09-30','2026-11-02','2026-10-99'])assert.equal((await request('imports','POST',{...period,id:'bad-range',endDate},admin)).status,400);
+ const saved=await(await request('imports','GET',undefined,admin)).json();
+ assert.equal(saved.find(i=>i.id==='range-1').endDate,'2026-10-10');
+ assert.equal(saved.find(i=>i.id==='range-2').endDate,'2026-10-15');
+ await request('imports/range-1','DELETE',undefined,admin);await request('imports/range-2','DELETE',undefined,admin);
+});
+
+test('soma mensal: intervalos substituem dias cobertos sem duplicar períodos sobrepostos',()=>{
+ const range=(id,start,end,time)=>({...record,id,periodKind:'range',reference:'2026-10-'+start,endDate:'2026-10-'+end,importedAt:`2026-10-22T12:00:0${time}.000Z`});
+ const day=(id,date)=>({...record,id,reference:'2026-10-'+date});
+ const a=range('a','01','10',1),b=range('b','11','15',2),c=range('c','05','15',3);
+ const d1=day('d1','01'),d10=day('d10','10'),d16=day('d16','16');
+ const ids=items=>salesDashboard.monthImports(items,'2026-10').map(i=>i.id).join(',');
+ assert.equal(ids([a,b,d1,d10,d16]),'a,b,d16');
+ assert.equal(ids([a,b,c,d1,d10,d16]),'d1,c,d16');
+ assert.equal(ids([a,{...a,id:'new',importedAt:'2026-10-23T12:00:00.000Z'},d16]),'new,d16');
+ assert.equal(ids([a,b,{...record,id:'monthly',periodKind:'month',reference:'2026-10'}]),'monthly');
+ assert.equal(salesDashboard.latestDailyImports([a,b,d1,d16],'2026-10').length,2);
+ assert.equal(salesDashboard.monthKeys([a,b]).join(','),'2026-10');
+});
+
+test('vendedor pode ser identificado pela matrícula com correspondência única',()=>{
+ const person={id:'registration-test',name:'Pessoa Teste',registration:'12345',biIdentifier:'',status:'ativo',role:'Caixa'};
+ assert.equal(biModel.findEmployeeForSeller('12345',[person]).id,person.id);
+ assert.equal(biModel.findEmployeeForSeller('12345',[person,{...person,id:'other'}]),null);
+});
