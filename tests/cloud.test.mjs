@@ -315,3 +315,11 @@ test('vendedor pode ser identificado pela matrícula com correspondência única
  assert.equal(biModel.findEmployeeForSeller('12345',[person]).id,person.id);
  assert.equal(biModel.findEmployeeForSeller('12345',[person,{...person,id:'other'}]),null);
 });
+
+test('exportação Power BI: resumos e rodapé não são importados como vendedores',()=>{
+ const table={columns:['Vendedor','Venda'],rows:[[' Pessoa Teste ','100'],['Total','100'],[' TOTAL GERAL ','100'],['Filtros aplicados:\nDate: 22/10/2026',''],['Totalino da Silva','20'],['','']]};
+ assert.equal(biModel.summarySourceRows(table,'Vendedor').join(','),'3,4,5');
+ assert.equal(biModel.summarySourceRows(table,'Inexistente').length,0);
+ const rows=biModel.validateRows(table,{...biModel.EMPTY_MAPPING,seller:'Vendedor',sale:'Venda'},new Set(biModel.summarySourceRows(table,'Vendedor')),new Set());
+ assert.equal(rows.filter(row=>row.record).map(row=>row.record.seller).join(','),'Pessoa Teste,Totalino da Silva');
+});

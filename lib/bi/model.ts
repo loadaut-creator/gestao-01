@@ -182,6 +182,15 @@ export function validateRows(table: ParsedTable, mapping: Mapping, excluded: Set
 
 export function normalizeIdentifier(value: string) { return normal(value); }
 
+export function summarySourceRows(table: ParsedTable, sellerColumn: string): number[] {
+  const index = table.columns.indexOf(sellerColumn);
+  if (index < 0) return [];
+  return table.rows.flatMap((row, position) => {
+    const seller = normal(row[index] ?? "");
+    return seller === "total" || seller === "total geral" || seller.startsWith("filtros aplicados:") ? [position + 2] : [];
+  });
+}
+
 function nameTokens(value: string) {
   return normal(value).replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter((part) => part && !["da", "de", "do", "das", "dos"].includes(part));
 }

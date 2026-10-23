@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, FileSpreadsheet, Save, Trash2, UploadCloud } from "lucide-react";
 import { loadEmployees, subscribeToEmployeeChanges } from "@/lib/team/repository";
 import type { Employee } from "@/lib/team/model";
-import { EMPTY_MAPPING, importPeriodLabel, findEmployeeForSeller, mappingErrors, normalizeIdentifier, settingsErrors, suggestMapping, suggestSellerRoles, validateRows, type ImportRecord, type ImportSettings, type Mapping } from "@/lib/bi/model";
+import { EMPTY_MAPPING, importPeriodLabel, findEmployeeForSeller, mappingErrors, normalizeIdentifier, settingsErrors, suggestMapping, suggestSellerRoles, summarySourceRows, validateRows, type ImportRecord, type ImportSettings, type Mapping } from "@/lib/bi/model";
 import { parseBiFile, type ParsedTable } from "@/lib/bi/parser";
 import { deleteImport, subscribeToImports, saveImport } from "@/lib/bi/repository";
 import { sumSales, validSalesEntries } from "@/lib/sales/dashboard";
@@ -67,6 +67,7 @@ function ImportFlow({ kind, employees, onSaved }: { kind: "day" | "range"; emplo
       const parsed = await parseBiFile(selected);
       const suggestedMapping = suggestMapping(parsed.columns);
       setFile(selected); setTable(parsed); setMapping(suggestedMapping);
+      setExcluded(new Set(summarySourceRows(parsed, suggestedMapping.seller)));
       setDisplayColumns(parsed.columns.filter((column) => ["Vendedor", "Venda", "Clientes", "Ticket Médio", "Gen/Sim", "MP"].includes(column)));
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "Não foi possível ler o arquivo." });
