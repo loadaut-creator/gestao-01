@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { isCloud } from "@/lib/cloud/client";
 import { GOAL_SECTORS, goalProgress, type MonthlyGoal } from "@/lib/goals/model";
 import { loadGoals, subscribeToGoals } from "@/lib/goals/repository";
 import { useEffect, useMemo, useState } from "react";
@@ -88,6 +89,8 @@ export function SalesDashboard() {
   if (error) return <section className="panel sales-state" role="alert">{error}</section>;
   if (!imports) return <section className="panel sales-state">Carregando vendas…</section>;
   if (!months.length) return <section className="panel sales-state"><h2>Sem vendas importadas</h2><p>Importe vendas diárias ou de um período para montar o painel.</p><Link href="/importacao-bi" className="button button-primary">Ir para importação</Link></section>;
+  if (!employees.length) return <section className="panel sales-state" role="status"><h2>Importação salva, mas a Equipe está vazia</h2><p>Para calcular as vendas da loja, é necessário identificar os colaboradores ativos de Balcão, Perfumaria e Caixa.</p>{!isCloud() && <p>Você está na prévia local, que possui dados separados do site publicado.</p>}<div className="cloud-actions">{!isCloud() && <a className="button button-primary" href="https://muralindiana.online/vendas/">Abrir vendas no site publicado</a>}<Link href="/equipe/" className="button button-neutral">Conferir Equipe</Link></div></section>;
+  if (!monthEntries.length && monthRecords.some(record=>record.records.some(row=>row.sale>0))) return <section className="panel sales-state" role="status"><h2>Confira os vínculos da importação</h2><p>O arquivo tem valores de venda, mas nenhum corresponde a um colaborador ativo dos setores de venda. Confira o nome, a matrícula ou o identificador BI e o status na Equipe.</p><div className="cloud-actions"><Link href="/equipe/" className="button button-primary">Conferir Equipe</Link><Link href="/importacao-bi/" className="button button-neutral">Conferir importação</Link></div></section>;
 
   return <div className="sales-dashboard">
     <section className="panel sales-filter-panel" aria-label="Filtros de vendas">
