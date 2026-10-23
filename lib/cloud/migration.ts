@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { employeeSchema, goalSchema, importSchema, templateSchema } from "./validation";
 import {campaignSchema} from "../campaigns/model";
-export const backupSchema=z.object({schemaVersion:z.literal(1),exportedAt:z.string().optional(),employees:z.array(employeeSchema),goals:z.array(goalSchema),templates:z.array(templateSchema),imports:z.array(importSchema),campaigns:z.array(campaignSchema).max(100).default([])});
+import {dailyGoalSchema,dailyGoalKey} from "../goals/daily";
+export const backupSchema=z.object({schemaVersion:z.literal(1),exportedAt:z.string().optional(),employees:z.array(employeeSchema),goals:z.array(goalSchema),templates:z.array(templateSchema),imports:z.array(importSchema),campaigns:z.array(campaignSchema).max(100).default([]),dailyGoals:z.array(dailyGoalSchema).max(5000).default([])});
 export type Backup=z.infer<typeof backupSchema>;
 export function mergeMigration(local:Backup,remote:Backup) {
   const conflicts:string[]=[];
@@ -19,5 +20,6 @@ export function mergeMigration(local:Backup,remote:Backup) {
   const templates=merge(local.templates,remote.templates,row=>row.id,"Modelo");
   const imports=merge(local.imports,remote.imports,row=>row.id,"Importação");
   const campaigns=merge(local.campaigns||[],remote.campaigns||[],row=>row.id,"Campanha");
-  return {employees,goals,templates,imports,campaigns,conflicts};
+  const dailyGoals=merge(local.dailyGoals||[],remote.dailyGoals||[],dailyGoalKey,"Meta diária");
+  return {employees,goals,templates,imports,campaigns,dailyGoals,conflicts};
 }

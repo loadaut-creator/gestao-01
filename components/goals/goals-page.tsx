@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Target, Check } from "lucide-react";
+import { DailyGoalsEditor } from "./daily-goals-editor";
 import { MonthlyAllocation } from "./monthly-allocation";
 import { subscribeToImports } from "@/lib/bi/repository";
 import type { ImportRecord } from "@/lib/bi/model";
@@ -65,5 +66,5 @@ export function GoalsPage() {
   const entries = useMemo(() => classifyRows(monthImports(imports, month), employees), [imports, month, employees]);
   if (error) return <section className="panel" role="alert">{error}</section>;
   if (!goals) return <section className="panel">Carregando metas…</section>;
-  return <div className="goals-page"><MonthlyAllocation key={month + JSON.stringify(goals.filter((goal) => goal.month === month && goal.metric === "sale"))} month={month} onMonthChange={setMonth} goals={goals} mode={allocationMode} onModeChange={setAllocationMode} onSaved={() => setAllocationSaved(month)} onEdit={() => setAllocationSaved("")}/>{allocationSaved === month && <p className="goal-success" role="status">Distribuição salva. Metas de vendas dos setores atualizadas.</p>}<div className="goals-grid">{GOAL_SECTORS.map((sector) => <SectorGoals key={`${month}-${sector}`} month={month} sector={sector} goals={goals.filter((goal) => goal.month === month && goal.sector === sector)} entries={entries.filter((entry) => entry.sector === sector)}/>)}</div><p className="data-note">Resultados usam os funcionários ativos vinculados na Equipe e a importação mensal, ou a soma dos dias disponíveis. Ticket médio = vendas ÷ clientes. Valores ausentes na importação aparecem como sem dados.</p></div>;
+  return <div className="goals-page"><MonthlyAllocation key={month + JSON.stringify(goals.filter((goal) => goal.month === month && goal.metric === "sale"))} month={month} onMonthChange={setMonth} goals={goals} mode={allocationMode} onModeChange={setAllocationMode} onSaved={() => setAllocationSaved(month)} onEdit={() => setAllocationSaved("")}/>{allocationSaved === month && <p className="goal-success" role="status">Distribuição salva. Metas de vendas dos setores atualizadas.</p>}<DailyGoalsEditor employees={employees}/><div className="goals-grid">{GOAL_SECTORS.map((sector) => <SectorGoals key={`${month}-${sector}`} month={month} sector={sector} goals={goals.filter((goal) => goal.month === month && goal.sector === sector)} entries={entries.filter((entry) => entry.sector === sector)}/>)}</div><p className="data-note">Resultados usam os funcionários ativos vinculados na Equipe e a importação mensal, ou a soma dos dias disponíveis. Ticket médio = vendas ÷ clientes. Valores ausentes na importação aparecem como sem dados.</p></div>;
 }

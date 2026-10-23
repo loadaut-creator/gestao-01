@@ -18,6 +18,7 @@ const biNumbers=load('lib/bi/numbers.ts');
 const biModel=load('lib/bi/model.ts');
 const campaigns=load('lib/campaigns/model.ts');
 const campaignGroups=load('lib/campaigns/rankings.ts');
+const dailyGoalsModel=load('lib/goals/daily.ts');
 const campaign={id:'campaign-test',name:'Teste MP',sector:'Balcão',metric:'money',startsAt:'2020-01-01',endsAt:'2099-12-31',status:'published',powerBiUrl:'https://app.powerbi.com/report/test',rules:'',prize:'',order:0,createdAt:'2026-10-22T12:00:00.000Z',updatedAt:'2026-10-22T12:00:00.000Z',ranking:{fileName:'teste.csv',importedAt:'2026-10-22T12:00:00.000Z',rows:[{seller:'Pessoa externa',value:31146}]}};
 test('rankings agrupam linhas e setores, mantendo somente campanhas vigentes',()=>{
  const records=[{...campaign,id:'c1',name:'CAMPANHA CIMED',sector:'Balcão'}, {...campaign,id:'c2',name:'CIMED — PERFUMISTA',sector:'Perfumaria',order:1}, {...campaign,id:'c3',name:'Cimed - Caixa',sector:'Caixa',order:2}, {...campaign,id:'mp',name:'MP - BALCAO',order:3}, {...campaign,id:'draft',name:'Cimed',status:'draft'}, {...campaign,id:'closed',name:'Cimed',status:'closed'}, {...campaign,id:'future',name:'Cimed',startsAt:'2027-01-01'}, {...campaign,id:'past',name:'Cimed',endsAt:'2026-10-21'}];
@@ -225,4 +226,36 @@ test('campanhas persistem com revisão e funcionário só consulta publicadas vi
  const old={...backup};delete old.campaigns;assert.equal(migration.backupSchema.parse(old).campaigns.length,0);
  assert.equal(migration.mergeMigration(backup,{...backup,campaigns:[]}).campaigns.length,7);
  assert.equal((await request('validate-migration','POST',backup,admin)).status,200);
+});
+
+test('metas diárias: administrador grava e colaborador consulta somente as próprias metas',async()=>{
+ addPerson(person('daily-a','Pessoa Meta A','9170'));addPerson(person('daily-b','Pessoa Meta B','9171'));
+ const goal={date:'2026-10-22',employeeId:'daily-a',target:1500.50,updatedAt:'2026-10-22T12:00:00.000Z'};
+ const data=[goal,{...goal,date:'2026-10-23',target:2000},{...goal,employeeId:'daily-b',target:990}];
+ assert.equal((await request('dailyGoals','PUT',{version:0,data},admin)).status,200);
+ assert.equal((await request('dailyGoals','PUT',{version:0,data:[]},admin)).status,409);
+ assert.equal((await request('dailyGoals','PUT',{version:1,data:[{...goal,target:-10}]},admin)).status,400);
+ assert.equal((await request('dailyGoals','PUT',{version:1,data:[{...goal,date:'2026-02-30'}]},admin)).status,400);
+ assert.equal((await request('dailyGoals','PUT',{version:1,data:[goal,goal]},admin)).status,400);
+ assert.equal((await request('dailyGoals','PUT',{version:1,data},await token('manager@example.com'))).status,403);
+ assert.equal((await request('dailyGoals','PUT',{version:1,data},await token('viewer@example.com'))).status,403);
+ const login=await siteRequest('auth/login','POST',{username:'9170',password:'test-staff-password'},'','198.51.100.170');
+ const cookie=login.headers.get('set-cookie').split(';')[0];
+ const state=await(await siteRequest('state','GET',undefined,cookie)).json();
+ assert.equal(state.data.dailyGoals.length,2);assert.ok(state.data.dailyGoals.every(g=>g.employeeId==='daily-a'));assert.equal(state.versions.dailyGoals,1);
+ assert.equal((await siteRequest('dailyGoals','PUT',{version:1,data:[]},cookie)).status,403);
+ const all=await(await request('state','GET',undefined,admin)).json();assert.equal(all.data.dailyGoals.length,3);
+ const oldBackup={schemaVersion:1,employees:[],goals:[],templates:[],imports:[]};
+ assert.equal(migration.backupSchema.parse(oldBackup).dailyGoals.length,0);
+ const backup=migration.backupSchema.parse({...oldBackup,dailyGoals:data});assert.equal(migration.mergeMigration(backup,migration.backupSchema.parse(oldBackup)).dailyGoals.length,3);
+ assert.equal((await request('validate-migration','POST',backup,admin)).status,200);
+});
+
+test('meta diária usa apenas a importação mais recente da data, sem substituir ausência por zero',()=>{
+ const older={...record,importedAt:'2026-10-22T08:00:00.000Z',records:[{...record.records[0],sale:500}]};
+ const newer={...record,importedAt:'2026-10-22T10:00:00.000Z',records:[{...record.records[0],sale:700}]};
+ assert.equal(dailyGoalsModel.dailyActual([older,newer],'2026-10-22'),700);
+ assert.equal(dailyGoalsModel.dailyActual([newer],'2026-10-23'),null);
+ assert.equal(dailyGoalsModel.dailyActual([{...newer,periodKind:'month',reference:'2026-10'}],'2026-10-22'),null);
+ assert.equal(dailyGoalsModel.dailyActual([{...newer,records:[{...record.records[0],sale:0}]}],'2026-10-22'),0);
 });

@@ -13,6 +13,8 @@ type TeamDatePickerProps = {
   label: string;
   id?: string;
   invalid?: boolean;
+  disabled?: boolean;
+  heading?: string;
 };
 
 function selectedDate(value: string) {
@@ -20,14 +22,15 @@ function selectedDate(value: string) {
   return match ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])) : undefined;
 }
 
-export function TeamDatePicker({ value, onChange, label, id, invalid }: TeamDatePickerProps) {
+export function TeamDatePicker({ value, onChange, label, id, invalid,disabled,heading }: TeamDatePickerProps) {
   const [open, setOpen] = useState(false);
   const selected = selectedDate(value);
   const shown = selected ? selected.toLocaleDateString("pt-BR") : "dd/mm/aaaa";
 
   return <Popover open={open} onOpenChange={setOpen}>
-    <PopoverTrigger asChild><button id={id} type="button" className="form-control team-date-trigger" aria-label={label} data-invalid={invalid || undefined} aria-haspopup="dialog" aria-expanded={open}><span>{shown}</span><CalendarDays size={17} aria-hidden="true"/></button></PopoverTrigger>
-    <PopoverContent className="team-date-popover" align="start" side="bottom" collisionPadding={12}>
+    <PopoverTrigger asChild><button id={id} type="button" className="form-control team-date-trigger" aria-label={label} disabled={disabled} data-invalid={invalid || undefined} aria-haspopup="dialog" aria-expanded={open}><span>{shown}</span><CalendarDays size={17} aria-hidden="true"/></button></PopoverTrigger>
+    <PopoverContent className={`team-date-popover ${heading?"goal-date-popover":""}`} align="start" side="bottom" collisionPadding={12}>
+      {heading&&<div className="goal-calendar-header"><span>{heading}</span><strong>{selected?selected.toLocaleDateString("pt-BR",{weekday:"short",day:"numeric",month:"long"}):"Escolha uma data"}</strong></div>}
       <DayPicker
         mode="single"
         selected={selected}

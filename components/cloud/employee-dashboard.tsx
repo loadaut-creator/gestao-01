@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
+import { EmployeeDailyGoal } from "../goals/employee-daily-goal";
 import { CampaignsPage } from "../campaigns/campaigns-page";
 import { ProfileMenu } from "./profile-menu";
 import { useEffect, useState } from "react";
@@ -29,7 +30,7 @@ export function EmployeeDashboard({page="inicio"}:{page?:string}) {
     <Link href="/" className={`button ${campaignView?"button-neutral":"button-primary"}`} aria-current={!campaignView?"page":undefined}>Minhas vendas</Link>
     <Link href="/campanhas/" className={`button ${campaignView?"button-primary":"button-neutral"}`} aria-current={campaignView?"page":undefined}>Campanhas</Link>
    </nav>
-   {campaignView?<CampaignsPage employeeMode/>:<section className="panel">
+   {campaignView?<CampaignsPage employeeMode/>:<><section className="panel">
     <div className="goals-toolbar"><div><h2>Minhas vendas</h2><p>Somente os seus resultados nos períodos importados.</p></div>
      {!!imports?.length&&<label className="form-field"><span>Período importado</span><select className="form-control" value={record?.id||""} onChange={event=>setSelected(event.target.value)}>{imports.map(item=><option value={item.id} key={item.id}>{item.periodKind==="day"?"Dia":"Mês"} · {item.reference.split("-").reverse().join("/")}</option>)}</select></label>}
     </div>
@@ -40,7 +41,7 @@ export function EmployeeDashboard({page="inicio"}:{page?:string}) {
       <tbody>{record.records.map(row=><tr key={row.sourceRow}><td>{row.seller}</td><td>{money(row.sale)}</td><td>{row.clients??"—"}</td><td>{row.ticket===null?"—":money(row.ticket)}</td><td>{row.genSim===null?"—":money(row.genSim)}</td><td>{row.mp===null?"—":money(row.mp)}</td></tr>)}</tbody>
      </table></div>
     </>}
-   </section>}
+   </section><EmployeeDailyGoal imports={imports}/></>}
   </main>
  </div>;
 }

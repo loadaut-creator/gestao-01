@@ -1,4 +1,5 @@
 import { sectorCampaigns, campaignSchema, type Campaign } from "../../lib/campaigns/model";
+import {dailyGoalSchema,type DailyGoal} from "../../lib/goals/daily";
 import { authenticate, type CloudEnv } from "../../lib/cloud/auth";
 import { importSchema, parseDocuments, resources, userSchema, type Resource } from "../../lib/cloud/validation";
 import { z } from "zod";
@@ -38,15 +39,16 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     const documents=async(resource:Resource)=>(await q("SELECT data FROM documents WHERE store_id=? AND resource=? ORDER BY id",store,resource).all<{data:string}>()).results.map(item=>JSON.parse(item.data));
     if(path==="validate-migration" && request.method==="POST") {
       if(permission.role!=="admin") return json({error:"Apenas o administrador pode migrar dados."},403);
-      const backup=z.object({schemaVersion:z.literal(1),employees:z.array(z.unknown()),goals:z.array(z.unknown()),templates:z.array(z.unknown()),imports:z.array(importSchema).max(1000),campaigns:z.array(campaignSchema).max(100).default([])}).parse(await readJson(request));
-      for(const resource of ["employees","goals","templates","campaigns"] as const) parseDocuments(resource,backup[resource]);
+      const backup=z.object({schemaVersion:z.literal(1),employees:z.array(z.unknown()),goals:z.array(z.unknown()),templates:z.array(z.unknown()),imports:z.array(importSchema).max(1000),campaigns:z.array(campaignSchema).max(100).default([]),dailyGoals:z.array(dailyGoalSchema).max(5000).default([])}).parse(await readJson(request));
+      for(const resource of ["employees","goals","templates","campaigns","dailyGoals"] as const) parseDocuments(resource,backup[resource]);
       if(new Set(backup.imports.map(record=>record.id)).size!==backup.imports.length) return json({error:"Backup com importações repetidas."},400);
       return json({ok:true});
     }
     if(path==="state" && request.method==="GET") {
       if(siteUser?.kind==="employee") {
-        const revision=await q("SELECT version FROM revisions WHERE store_id=? AND resource='campaigns'",store).first<{version:number}>();
-        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],campaigns:sectorCampaigns(await documents("campaigns") as Campaign[],siteUser.employee?.sector)},versions:{campaigns:revision?.version||0}});
+        const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=? AND resource IN ('campaigns','dailyGoals')",store).all<{resource:string;version:number}>()).results;
+        const dailyGoals=(await documents("dailyGoals") as DailyGoal[]).filter(goal=>goal.employeeId===siteUser.identity);
+        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],dailyGoals,campaigns:sectorCampaigns(await documents("campaigns") as Campaign[],siteUser.employee?.sector)},versions:Object.fromEntries(revisions.map(item=>[item.resource,item.version]))});
       }
       const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=?",store).all<{resource:string;version:number}>()).results;
       const entries=await Promise.all(resources.filter(resource=>resource!=="users"||permission.role==="admin").map(async resource=>[resource,await documents(resource)]));
@@ -69,6 +71,7 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     }
     if(resources.includes(path as Resource) && request.method==="PUT") {
       const resource=path as Resource;
+      if(resource==="dailyGoals"&&permission.role!=="admin")return json({error:"Apenas o administrador define metas diárias."},403);
       if(resource==="users"&&permission.role!=="admin") return json({error:"Apenas o administrador gerencia acessos."},403);
       const body=z.object({version:z.number().int().nonnegative(),data:z.unknown()}).parse(await readJson(request));
       const rows=parseDocuments(resource,body.data);

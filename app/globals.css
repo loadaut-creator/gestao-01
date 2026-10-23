@@ -859,3 +859,39 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 @media(max-width:1100px){.rank-sector-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:700px){.rank-sector-grid,.rank-sector-grid:has(> :first-child:nth-last-child(2)) {grid-template-columns:minmax(0,1fr);} .rank-line-panel {padding:var(--space-3);} .rank-line-title {gap:var(--space-2);} .rank-line-icon {display:none;} .rank-line-title h2 {font-size:var(--font-h4);} .rank-line-heading {align-items:start;} .rankings-toolbar {align-items:stretch;flex-direction:column;} .rankings-toolbar label {width:auto;} .rank-table th,.rank-table td {padding-inline:var(--space-1);} .rank-table th:first-child,.rank-table td:first-child {width:36px;} .rank-table th:last-child,.rank-table td:last-child {width:104px;} .rank-sector-heading {flex-wrap:wrap;} }
 
+
+/* Metas individuais e calendário. */
+.daily-goals-editor {min-width:0;}
+.daily-goal-form {display:grid;grid-template-columns:170px minmax(200px,1fr) 180px auto;gap:var(--space-3);align-items:end;margin-top:var(--space-4);}
+.daily-goal-form .form-field {min-width:0;}
+.daily-goal-form .form-control {width:100%;}
+.daily-goal-form>.button {margin-bottom:0;white-space:nowrap;}
+.daily-goals-list {margin-top:var(--space-4);max-height:400px;}
+.daily-goals-list table {width:100%;border-collapse:collapse;}
+.daily-goals-list th,.daily-goals-list td {padding:var(--space-3);border-bottom:1px solid var(--color-border);text-align:left;}
+.daily-goals-list thead th {font-size:var(--font-caption);color:var(--color-secondary);}
+.daily-goals-list tbody th {font-size:var(--font-label);font-weight:var(--weight-medium);overflow-wrap:anywhere;}
+.daily-goals-list small {display:block;font-size:var(--font-caption);color:var(--color-secondary);font-weight:400;margin-top:var(--space-1);}
+.daily-goals-list td {text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.employee-daily-goal {margin-top:var(--space-4);}
+.daily-goal-heading {display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;}
+.daily-goal-heading>div {display:flex;align-items:center;gap:var(--space-2);}
+.daily-goal-heading h2 {margin:0;font-size:var(--font-h3);}
+.daily-goal-heading>.form-field {width:180px;}
+.daily-goal-stats {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-4);margin:var(--space-4) 0;}
+.daily-goal-stats>div {display:flex;flex-direction:column;gap:var(--space-1);}
+.daily-goal-stats span {color:var(--color-secondary);font-size:var(--font-label);}
+.daily-goal-stats strong {color:var(--navy);font-size:var(--font-h3);overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+.employee-daily-goal progress {width:100%;height:8px;accent-color:var(--navy);}
+.goal-date-popover {border-radius:var(--radius-card)!important;}
+.goal-calendar-header {margin:-12px -12px 12px;padding:var(--space-4);border-radius:var(--radius-card) var(--radius-card) 0 0;background:var(--navy);color:#fff;}
+.goal-calendar-header>span {display:block;font-size:var(--font-caption);opacity:.85;margin-bottom:var(--space-2);}
+.goal-calendar-header strong {font-size:var(--font-h4);font-weight:600;}
+.goal-date-popover .rdp-root {--rdp-day-width:40px;--rdp-day-height:40px;--rdp-day_button-width:40px;--rdp-day_button-height:40px;--rdp-day_button-border-radius:50%;font-family:inherit;}
+.goal-date-popover .rdp-weekday {font-size:var(--font-caption);color:var(--color-secondary);}
+.goal-date-popover .rdp-day_button {border-radius:50%;font-size:var(--font-label);}
+.goal-date-popover .rdp-today:not(.rdp-selected) .rdp-day_button {border:1px solid var(--navy);}
+.goal-date-popover .rdp-day_button:hover:not(:disabled) {background:#eaf3ff;color:var(--navy);}
+.goal-date-popover .rdp-selected .rdp-day_button:hover {background:var(--navy);color:#fff;}
+@media(max-width:1100px){.daily-goal-form {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:600px){.daily-goal-form {grid-template-columns:minmax(0,1fr);} .daily-goal-form>.button {width:100%;} .daily-goal-stats {grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);} .daily-goal-stats>div:first-child {grid-column:1/-1;} .daily-goals-list th,.daily-goals-list td {padding:var(--space-2);} .daily-goals-list td:last-child .button {padding-inline:var(--space-2);} .daily-goals-list tbody th {min-width:110px;} }
