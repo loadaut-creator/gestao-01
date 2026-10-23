@@ -10,12 +10,12 @@ export const GOAL_METRICS = [
 ] as const;
 export type GoalMetric = typeof GOAL_METRICS[number]["key"];
 export type GoalSector = typeof GOAL_SECTORS[number];
-export type MonthlyGoal = { month: string; sector: GoalSector; metric: GoalMetric; target: number };
+export type MonthlyGoal = { month: string; sector: GoalSector; metric: GoalMetric; target: number; days?:number };
 
 export function validGoal(goal: MonthlyGoal) {
   return /^\d{4}-(0[1-9]|1[0-2])$/.test(goal.month) && GOAL_SECTORS.includes(goal.sector) &&
     GOAL_METRICS.some((item) => item.key === goal.metric) && Number.isFinite(goal.target) && (goal.metric === "sale" ? goal.target >= 0 : goal.target > 0) &&
-    (goal.metric !== "clients" || Number.isInteger(goal.target));
+    (goal.metric !== "clients" || Number.isInteger(goal.target)) && (goal.days===undefined||(Number.isInteger(goal.days)&&goal.days>=1&&goal.days<=31));
 }
 
 export function goalActual(entries: SalesEntry[], metric: GoalMetric): number | null {

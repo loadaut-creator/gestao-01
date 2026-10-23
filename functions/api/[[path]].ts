@@ -1,9 +1,10 @@
 import { sectorCampaigns, campaignSchema, type Campaign } from "../../lib/campaigns/model";
-import {dailyGoalSchema,type DailyGoal} from "../../lib/goals/daily";
+import {dailyGoalSchema,employeeDailyGoalBases,type DailyGoal} from "../../lib/goals/daily";
 import { authenticate, type CloudEnv } from "../../lib/cloud/auth";
 import { importSchema, parseDocuments, resources, userSchema, type Resource } from "../../lib/cloud/validation";
 import { z } from "zod";
 import { allEmployees, siteIdentity, siteLogin, siteLoginEnabled, siteLogout, siteSession } from "../../lib/cloud/site-auth";
+import type {MonthlyGoal} from "../../lib/goals/model";
 import { scopeEmployeeImports } from "../../lib/cloud/employee-scope";
 const json=(data:unknown,status=200)=>Response.json(data,{status,headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
 async function readJson(request:Request):Promise<unknown> {
@@ -46,9 +47,9 @@ export const onRequest: PagesFunction<CloudEnv> = async ({request,env,params}) =
     }
     if(path==="state" && request.method==="GET") {
       if(siteUser?.kind==="employee") {
-        const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=? AND resource IN ('campaigns','dailyGoals')",store).all<{resource:string;version:number}>()).results;
+        const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=? AND resource IN ('campaigns','dailyGoals','goals','employees')",store).all<{resource:string;version:number}>()).results;
         const dailyGoals=(await documents("dailyGoals") as DailyGoal[]).filter(goal=>goal.employeeId===siteUser.identity);
-        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],dailyGoals,campaigns:sectorCampaigns(await documents("campaigns") as Campaign[],siteUser.employee?.sector)},versions:Object.fromEntries(revisions.map(item=>[item.resource,item.version]))});
+        return json({data:{employees:[siteUser.employee],goals:[],templates:[],users:[],dailyGoals,dailyGoalBases:employeeDailyGoalBases(await documents("goals") as MonthlyGoal[],await allEmployees(env),siteUser.employee!),campaigns:sectorCampaigns(await documents("campaigns") as Campaign[],siteUser.employee?.sector)},versions:Object.fromEntries(revisions.map(item=>[item.resource,item.version]))});
       }
       const revisions=(await q("SELECT resource,version FROM revisions WHERE store_id=?",store).all<{resource:string;version:number}>()).results;
       const entries=await Promise.all(resources.filter(resource=>resource!=="users"||permission.role==="admin").map(async resource=>[resource,await documents(resource)]));

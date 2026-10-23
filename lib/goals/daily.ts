@@ -1,5 +1,25 @@
 import {z} from "zod";
 import type {ImportRecord} from "../bi/model";
+import type {MonthlyGoal} from "./model";
+import type {Employee} from "../team/model";
+
+export function calendarDays(month:string) {const [year,value]=month.split("-").map(Number);return new Date(Date.UTC(year,value,0)).getUTCDate();}
+export function goalDays(goals:MonthlyGoal[],month:string) {return goals.find(goal=>goal.month===month&&goal.days!==undefined)?.days??calendarDays(month);}
+export function withGoalDays(goals:MonthlyGoal[],month:string,days:number) {
+ if(!Number.isInteger(days)||days<1||days>31)throw Error("Informe uma quantidade de dias entre 1 e 31.");
+ return goals.map(goal=>goal.month===month?{...goal,days}:goal);
+}
+export function sectorDailyBase(goals:MonthlyGoal[],employees:Employee[],month:string,sector:string) {
+ const goal=goals.find(goal=>goal.month===month&&goal.sector===sector&&goal.metric==="sale");
+ const activeEmployees=employees.filter(employee=>employee.status==="ativo"&&employee.sector===sector).length;
+ const days=goal?.days??goalDays(goals,month);
+ const round=(value:number)=>Math.round((value+Number.EPSILON)*100)/100;
+ return {month,sector,days,activeEmployees,sectorTarget:goal?.target??null,monthlyTarget:goal&&goal.target>0&&activeEmployees?round(goal.target/activeEmployees):null,target:goal&&goal.target>0&&activeEmployees?round(goal.target/days/activeEmployees):null};
+}
+export type DailyGoalBase=ReturnType<typeof sectorDailyBase>;
+export function employeeDailyGoalBases(goals:MonthlyGoal[],employees:Employee[],employee:Employee) {
+ return [...new Set(goals.map(goal=>goal.month))].map(month=>sectorDailyBase(goals,employees,month,employee.sector));
+}
 
 export const dailyGoalSchema=z.object({
  date:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value=>!Number.isNaN(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value),

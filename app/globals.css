@@ -895,3 +895,18 @@ h4 { font-size: var(--font-h4); font-weight: var(--weight-semibold); line-height
 .goal-date-popover .rdp-selected .rdp-day_button:hover {background:var(--navy);color:#fff;}
 @media(max-width:1100px){.daily-goal-form {grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:600px){.daily-goal-form {grid-template-columns:minmax(0,1fr);} .daily-goal-form>.button {width:100%;} .daily-goal-stats {grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3);} .daily-goal-stats>div:first-child {grid-column:1/-1;} .daily-goals-list th,.daily-goals-list td {padding:var(--space-2);} .daily-goals-list td:last-child .button {padding-inline:var(--space-2);} .daily-goals-list tbody th {min-width:110px;} }
+
+.goal-employee-count {display:block;color:var(--color-secondary);font-size:var(--font-caption);font-weight:400;margin-top:var(--space-1);}
+.daily-distribution-heading {display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;}
+.daily-distribution-heading h2 {display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-h3);margin:0;}
+.daily-distribution-heading p {font-size:var(--font-label);color:var(--color-secondary);margin:var(--space-2) 0 0;}
+.daily-distribution-heading form {display:flex;align-items:end;gap:var(--space-2);}
+.daily-distribution-heading .form-field {width:180px;}
+.daily-distribution-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);margin-top:var(--space-4);}
+.daily-distribution-grid article {padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--space-2);background:#f7faff;min-width:0;}
+.daily-distribution-grid h3 {font-size:var(--font-h4);margin:0;}
+.daily-distribution-grid p,.daily-distribution-grid small {font-size:var(--font-caption);color:var(--color-secondary);margin:var(--space-1) 0 var(--space-3);}
+.daily-distribution-grid article>div {display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);margin-top:var(--space-2);font-size:var(--font-label);}
+.daily-distribution-grid strong {color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.daily-override>summary {cursor:pointer;font-size:var(--font-label);color:var(--navy);padding:var(--space-3) 0;}
+@media(max-width:700px){.daily-distribution-heading {align-items:stretch;flex-direction:column;}.daily-distribution-grid {grid-template-columns:minmax(0,1fr);}.daily-distribution-heading form {flex-wrap:wrap;}.daily-distribution-heading form>.form-field {flex:1;min-width:140px;}}

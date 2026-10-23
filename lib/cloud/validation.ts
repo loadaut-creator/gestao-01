@@ -10,7 +10,7 @@ export const employeeSchema = z.object({
   jobTitle: text.optional(), sector: z.enum(["Caixa","Balcão","Perfumaria","Outro"]), status: z.enum(["ativo","inativo"]),
   hiredAt: date, biIdentifier: text, createdAt: z.string().datetime(), updatedAt: z.string().datetime(),
 });
-export const goalSchema = z.object({month:z.string(),sector:z.enum(["Balcão","Perfumaria","Caixa"]),metric:z.enum(["sale","clients","genSim","mp","ticket"]),target:z.number().finite()}).refine(validGoal,"Meta inválida.");
+export const goalSchema = z.object({month:z.string(),sector:z.enum(["Balcão","Perfumaria","Caixa"]),metric:z.enum(["sale","clients","genSim","mp","ticket"]),target:z.number().finite(),days:z.number().int().min(1).max(31).optional()}).refine(validGoal,"Meta inválida.");
 const optionalNumber = z.number().finite().nullable();
 const rowSchema = z.object({sourceRow:z.number().int().min(2),seller:text.min(1),sale:z.number().finite(),saleWasBlank:z.boolean(),clients:z.number().int().nonnegative().nullable(),ticket:optionalNumber,genSim:optionalNumber,mp:optionalNumber,date:z.string().nullable(),sector:text.nullable(),clientPremium:optionalNumber,raw:z.record(z.string(),z.string().max(10000))});
 const mapping = z.object({seller:text,sale:text,clients:text,ticket:text,genSim:text,mp:text,date:text,sector:text,clientPremium:text});

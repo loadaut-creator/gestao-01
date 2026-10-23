@@ -259,3 +259,18 @@ test('meta diária usa apenas a importação mais recente da data, sem substitui
  assert.equal(dailyGoalsModel.dailyActual([{...newer,periodKind:'month',reference:'2026-10'}],'2026-10-22'),null);
  assert.equal(dailyGoalsModel.dailyActual([{...newer,records:[{...record.records[0],sale:0}]}],'2026-10-22'),0);
 });
+
+test('meta automática divide a meta do setor pelos dias e colaboradores ativos',()=>{
+ const employees=Array.from({length:10},(_,index)=>person('auto-'+index,'Pessoa '+index,String(index)));
+ employees.push(person('inactive','Inativo','999','inativo'),{...person('perf','Perfumista','998'),sector:'Perfumaria',role:'Perfumista'});
+ const goals=[{month:'2026-10',sector:'Balcão',metric:'sale',target:300000,days:30}];
+ const base=dailyGoalsModel.sectorDailyBase(goals,employees,'2026-10','Balcão');
+ assert.equal(base.activeEmployees,10);assert.equal(base.days,30);assert.equal(base.monthlyTarget,30000);assert.equal(base.target,1000);
+ assert.equal(dailyGoalsModel.calendarDays('2026-02'),28);assert.equal(dailyGoalsModel.calendarDays('2028-02'),29);
+ assert.equal(dailyGoalsModel.goalDays([{...goals[0],days:undefined}],'2026-10'),31);
+ assert.equal(dailyGoalsModel.sectorDailyBase(goals,[],'2026-10','Balcão').target,null);
+ const changed=dailyGoalsModel.withGoalDays(goals,'2026-10',25);assert.equal(changed[0].target,300000);assert.equal(changed[0].days,25);assert.equal(goals[0].days,30);
+ assert.equal(dailyGoalsModel.sectorDailyBase(changed,employees,'2026-10','Balcão').target,1200);
+ assert.throws(()=>dailyGoalsModel.withGoalDays(goals,'2026-10',0));
+ const scope=dailyGoalsModel.employeeDailyGoalBases(goals,employees,employees[0]);assert.equal(scope.length,1);assert.equal(scope[0].sector,'Balcão');assert.equal('employees' in scope[0],false);
+});

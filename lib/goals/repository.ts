@@ -1,6 +1,7 @@
 import { allocateMonthlyGoal, GOAL_SECTORS, validGoal, type AllocationMode, type MonthlyGoal, type GoalSector } from "./model";
 
 import { cloud, isCloud, saveCloud } from "../cloud/client";
+import {goalDays,withGoalDays} from "./daily";
 
 const KEY = "visao308:monthly-goals:v1";
 const EVENT = "visao308:goals-changed";
@@ -27,11 +28,20 @@ export function subscribeToGoals(onChange: () => void) {
 
 export async function saveMonthlyAllocation(month: string, total: number, mode: AllocationMode, values: number[]) {
   const amounts = allocateMonthlyGoal(total, mode, values);
-  const goals: MonthlyGoal[] = GOAL_SECTORS.map((sector, index) => ({ month, sector, metric: "sale", target: amounts[index] }));
+  const days=goalDays(loadGoals(),month);
+  const goals: MonthlyGoal[] = GOAL_SECTORS.map((sector, index) => ({ month, sector, metric: "sale", target: amounts[index],days }));
   if (!goals.every(validGoal)) throw new Error("Informe um mês válido.");
   const next = [...loadGoals().filter((goal) => goal.month !== month || goal.metric !== "sale"), ...goals];
   if (isCloud()) await saveCloud("goals", next);
   else localStorage.setItem(KEY, JSON.stringify(next));
   window.dispatchEvent(new Event(EVENT));
   return next;
+}
+
+export async function saveGoalDays(month:string,days:number) {
+ const current=loadGoals();
+ if(!current.some(goal=>goal.month===month&&goal.metric==="sale"))throw Error("Defina a meta mensal dos setores antes de salvar os dias.");
+ const next=withGoalDays(current,month,days);
+ if(isCloud())await saveCloud("goals",next);else localStorage.setItem(KEY,JSON.stringify(next));
+ window.dispatchEvent(new Event(EVENT));
 }
